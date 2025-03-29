@@ -25,7 +25,7 @@ export function InvoiceDialog({ open, onOpenChange, sale }: InvoiceDialogProps) 
           <div className="border dark:border-slate-700 p-4 rounded-lg">
             <div className="text-center mb-4 border-b dark:border-slate-700 pb-2">
               <ShoppingCart className="h-6 w-6 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
-              <p className="text-sm">Data/Hora: {formatDateTime(sale.dateTime)}</p>
+              <p className="text-sm font-medium">{formatDateTime(sale.dateTime)}</p>
               <p className="font-semibold">Venda #{sale.id}</p>
               {sale.status === 'cancelada' && (
                 <p className="mt-1 text-destructive font-semibold">CANCELADA</p>

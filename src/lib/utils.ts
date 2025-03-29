@@ -6,21 +6,29 @@ export function cn(...classes: (string | undefined | null | false)[]) {
 // Função para formatar a data e hora no formato DD.MM.YYYY_HH:MM (timezone Brasil)
 export function formatDateTime(isoString: string): string {
   try {
-    // Criar data no timezone do Brasil (GMT-3)
+    // Converter string ISO para objeto Date
     const date = new Date(isoString);
     
-    // Obter componentes da data no timezone do Brasil
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
+    // Verificar se a data é válida
+    if (isNaN(date.getTime())) {
+      console.error("Data inválida:", isoString);
+      return isoString;
+    }
     
-    // Converter para timezone Brasil (GMT-3)
-    const brazilTime = new Date(date.getTime() - 3 * 60 * 60 * 1000);
-    const hours = brazilTime.getUTCHours().toString().padStart(2, '0');
-    const minutes = brazilTime.getUTCMinutes().toString().padStart(2, '0');
+    // Formatar data no formato brasileiro com underline entre data e hora
+    const day = date.getUTCDate().toString().padStart(2, '0');
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+    const year = date.getUTCFullYear();
     
-    // Retornar no formato DD.MM.YYYY_HH:MM
-    return `${day}.${month}.${year}_${hours}:${minutes}`;
+    // Ajustar para timezone Brasil (GMT-3)
+    let hours = date.getUTCHours() - 3;
+    // Corrigir caso a hora fique negativa (volta para o dia anterior)
+    if (hours < 0) hours += 24;
+    
+    const hoursStr = hours.toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    
+    return `${day}.${month}.${year}_${hoursStr}:${minutes}`;
   } catch (error) {
     console.error("Erro ao formatar data:", error);
     return isoString;

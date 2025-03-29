@@ -61,7 +61,10 @@ export const createSale = async (clientId: number, productId: number, quantity: 
   if (product.quantity < quantity) throw new Error("Estoque insuficiente")
 
   const totalValue = quantity * product.value
-  const dateTime = new Date().toISOString() // <- agora salva corretamente
+  
+  // Garantir formato de data claro e em string ISO
+  const now = new Date();
+  const dateTime = now.toISOString();
 
   const { data, error } = await supabase
     .from('vendas')
@@ -70,7 +73,7 @@ export const createSale = async (clientId: number, productId: number, quantity: 
       productId,
       quantity,
       totalValue,
-      dateTime, // <- ESSENCIAL
+      dateTime,
       status: 'ativa'
     }])
     .select()
