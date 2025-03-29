@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useStore } from "@/store/store";
 import { Button } from "@/components/ui/button";
@@ -105,9 +104,7 @@ const ClientsPage = () => {
         <h1 className="text-3xl font-bold">Gerenciamento de Clientes</h1>
         <Button 
           onClick={() => refreshData()} 
-          variant="outline" 
-          size="sm"
-          className="flex gap-2 items-center"
+          className="flex gap-2 items-center bg-background border border-input hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3"
           disabled={isLoading}
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -170,8 +167,7 @@ const ClientsPage = () => {
                     <p className="text-sm text-muted-foreground">ID: {client.id}</p>
                   </div>
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                     onClick={() => confirmDelete(client.id)}
                   >
                     <Trash className="h-4 w-4 text-destructive" />

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useStore } from "@/store/store";
 import { Button } from "@/components/ui/button";
@@ -133,9 +132,7 @@ const ProductsPage = () => {
         <h1 className="text-3xl font-bold">Gerenciamento de Produtos</h1>
         <Button 
           onClick={() => refreshData()} 
-          variant="outline" 
-          size="sm"
-          className="flex gap-2 items-center"
+          className="flex gap-2 items-center bg-background border border-input hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3"
           disabled={isLoading}
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -220,25 +217,22 @@ const ProductsPage = () => {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-medium">{product.name}</h3>
-                    <p className="text-sm text-muted-foreground">ID: {product.id}</p>
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <span className="text-blue-600 dark:text-blue-400 font-medium">
+                        R$ {product.value.toFixed(2)}
+                      </span>
+                      <span>•</span>
+                      <span className={product.quantity <= 5 ? "text-orange-500" : ""}>
+                        Estoque: {product.quantity}
+                      </span>
+                    </div>
                   </div>
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                     onClick={() => confirmDelete(product.id)}
                   >
                     <Trash className="h-4 w-4 text-destructive" />
                   </Button>
-                </div>
-                <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
-                  <div className="bg-gray-50 dark:bg-slate-700 p-2 rounded">
-                    <span className="text-gray-500 dark:text-gray-300">Estoque:</span>
-                    <div className="font-semibold">{product.quantity} un</div>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-slate-700 p-2 rounded">
-                    <span className="text-gray-500 dark:text-gray-300">Preço:</span>
-                    <div className="font-semibold">R$ {product.value.toFixed(2)}</div>
-                  </div>
                 </div>
               </CardContent>
             </Card>

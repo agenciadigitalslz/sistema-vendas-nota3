@@ -1,7 +1,5 @@
-
 import { useStore } from "@/store/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, XAxis, YAxis, Bar, Tooltip, ResponsiveContainer } from "recharts";
 import { ShoppingCart, User, Package, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -14,15 +12,8 @@ const Dashboard = () => {
   // Calcular receita total das vendas ativas
   const totalRevenue = activeSales.reduce((sum, sale) => sum + sale.totalValue, 0);
   
-  // Obter dados das últimas 5 vendas para o gráfico
-  const salesData = detailedSales.slice(0, 5).map(sale => {
-    return {
-      id: sale.id,
-      name: sale.productName,
-      value: sale.totalValue,
-      status: sale.status
-    };
-  });
+  // Obter dados das últimas 5 vendas para visualização
+  const lastSales = detailedSales.slice(0, 5);
 
   const handleRefresh = () => {
     refreshData();
@@ -34,9 +25,7 @@ const Dashboard = () => {
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <Button 
           onClick={handleRefresh} 
-          variant="outline" 
-          size="sm"
-          className="flex gap-2 items-center"
+          className="flex gap-2 items-center bg-background border border-input hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3"
           disabled={isLoading}
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -98,40 +87,27 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle>Últimas Vendas</CardTitle>
           </CardHeader>
-          <CardContent className="h-80">
-            {salesData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesData}>
-                  <XAxis 
-                    dataKey="name" 
-                    stroke="#888888" 
-                    fontSize={12} 
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    stroke="#888888"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `R$${value}`}
-                  />
-                  <Tooltip 
-                    formatter={(value) => [`R$ ${Number(value).toFixed(2)}`, 'Valor']}
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(255, 255, 255, 0.8)', 
-                      borderRadius: '6px',
-                      border: '1px solid #e2e8f0'
-                    }}
-                  />
-                  <Bar 
-                    dataKey="value" 
-                    fill="#3b82f6"
-                    radius={[4, 4, 0, 0]}
-                    className="fill-blue-500 dark:fill-blue-400"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+          <CardContent>
+            {lastSales.length > 0 ? (
+              <div className="space-y-2">
+                {lastSales.map(sale => (
+                  <div 
+                    key={sale.id}
+                    className={`p-2 rounded border ${sale.status === 'ativa' ? 'border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950' : 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950'}`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium truncate max-w-[150px]">{sale.productName}</span>
+                      <span className="font-bold">R$ {sale.totalValue.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <span>Venda #{sale.id}</span>
+                      <span className={sale.status === 'ativa' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                        {sale.status === 'ativa' ? 'Ativa' : 'Cancelada'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="h-full flex items-center justify-center text-gray-400">
                 Nenhuma venda registrada
