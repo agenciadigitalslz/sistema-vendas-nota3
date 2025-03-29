@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -50,6 +49,11 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Variáveis para menu mobile */
+    --mobile-menu-height: 60px;
+    --mobile-menu-background: var(--background);
+    --mobile-menu-text: var(--foreground);
   }
 
   .dark {
@@ -88,6 +92,10 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Variáveis para menu mobile no tema escuro */
+    --mobile-menu-background: var(--sidebar-background);
+    --mobile-menu-text: var(--sidebar-foreground);
   }
 }
 

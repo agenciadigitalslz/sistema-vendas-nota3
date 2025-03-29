@@ -40,3 +40,22 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Estilos para dispositivos móveis */
+@media screen and (max-width: 768px) {
+  #root {
+    max-width: 100%;
+    padding: 1rem;
+  }
+
+  /* Estilos específicos para o menu mobile */
+  .menu-mobile {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: var(--background);
+    z-index: 1000;
+  }
+}
