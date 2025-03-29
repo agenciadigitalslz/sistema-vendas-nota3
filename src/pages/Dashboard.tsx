@@ -17,13 +17,24 @@ const Dashboard = () => {
     refreshData 
   } = useStore();
   
-  // Filtrar vendas por período
+  // Filtrar vendas por período - CORRIGIDO
   const vendasHoje = useMemo(() => {
-    const hoje = new Date().toDateString();
-    return vendas.filter(venda => 
-      venda.status !== "cancelada" && 
-      new Date(venda.created_at || venda.data_hora).toDateString() === hoje
-    );
+    const hoje = new Date();
+    const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const fimHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59, 999);
+    
+    return vendas.filter(venda => {
+      if (venda.status === "cancelada") return false;
+      
+      // Verificar diferentes campos de data possíveis
+      const dataVenda = new Date(venda.created_at || venda.data_hora);
+      
+      // Depuração: registre as datas para ver o que está errado
+      console.log('Data venda:', dataVenda, 'Hoje:', inicioHoje, 'Fim hoje:', fimHoje);
+      
+      // Verificar se a data da venda está entre o início e o fim do dia atual
+      return dataVenda >= inicioHoje && dataVenda <= fimHoje;
+    });
   }, [vendas]);
 
   // Vendas ativas (não canceladas)
@@ -31,18 +42,44 @@ const Dashboard = () => {
     vendas.filter(venda => venda.status !== "cancelada"),
   [vendas]);
   
-  // Calcular receitas
-  const receitaHoje = useMemo(() => 
-    vendasHoje.reduce((total, venda) => 
-      total + (venda.valor_total || venda.totalValue || 0), 0),
-  [vendasHoje]);
+  // Calcular receitas - CORRIGIDO
+  const receitaHoje = useMemo(() => {
+    console.log('Vendas hoje:', vendasHoje);
+    return vendasHoje.reduce((total, venda) => {
+      const valor = venda.valor_total || venda.totalValue || 0;
+      console.log('Adicionando valor:', valor);
+      return total + valor;
+    }, 0);
+  }, [vendasHoje]);
   
   const receitaTotal = useMemo(() => 
     vendasAtivas.reduce((total, venda) => 
       total + (venda.valor_total || venda.totalValue || 0), 0),
   [vendasAtivas]);
 
-  // Dados para o gráfico de últimas 5 vendas
+  // Função para obter cliente por ID - CORRIGIDO
+  const buscarNomeCliente = useCallback((clienteId) => {
+    if (!clienteId) return "Cliente não identificado";
+    
+    // Debug para verificar IDs
+    console.log('Buscando cliente:', clienteId, 'Clientes disponíveis:', clientes);
+    
+    const cliente = clientes.find((c) => c.id === clienteId || c.id?.toString() === clienteId?.toString());
+    return cliente ? (cliente.name || cliente.nome || "Cliente sem nome") : "Cliente não encontrado";
+  }, [clientes]);
+  
+  // Função para obter produto por ID - CORRIGIDO
+  const buscarNomeProduto = useCallback((produtoId) => {
+    if (!produtoId) return "Produto não identificado";
+    
+    // Debug para verificar IDs
+    console.log('Buscando produto:', produtoId, 'Produtos disponíveis:', produtos);
+    
+    const produto = produtos.find((p) => p.id === produtoId || p.id?.toString() === produtoId?.toString());
+    return produto ? (produto.name || produto.nome || "Produto sem nome") : "Produto não encontrado";
+  }, [produtos]);
+
+  // Dados para o gráfico e lista de últimas 5 vendas - CORRIGIDO
   const dadosUltimasVendas = useMemo(() => {
     // Ordenar por data (mais recentes primeiro)
     const ordenadas = [...vendas].sort((a, b) => {
@@ -51,30 +88,56 @@ const Dashboard = () => {
       return dateB - dateA;
     });
     
-    // Pegar as 5 primeiras
+    // Pegar as 5 primeiras - com mais informações
     return ordenadas.slice(0, 5).map(venda => {
-      const produto = produtos.find(p => p.id === venda.produto_id);
+      // Log para depuração
+      console.log('Processando venda:', venda);
+      
       return {
         id: venda.id,
-        name: produto?.nome || produto?.name || "Produto",
+        cliente_id: venda.cliente_id || venda.clientId,
+        produto_id: venda.produto_id || venda.productId,
+        name: buscarNomeProduto(venda.produto_id || venda.productId),
+        cliente: buscarNomeCliente(venda.cliente_id || venda.clientId),
         value: venda.valor_total || venda.totalValue || 0,
-        date: new Date(venda.created_at || venda.data_hora).toLocaleDateString('pt-BR'),
+        quantidade: venda.quantidade || venda.quantity || 1,
+        data_hora: venda.created_at || venda.data_hora,
         status: venda.status
       };
     });
-  }, [vendas, produtos]);
+  }, [vendas, buscarNomeCliente, buscarNomeProduto]);
 
-  // Função para obter cliente por ID
-  const buscarNomeCliente = useCallback((clienteId) => {
-    const cliente = clientes.find((c) => c.id === clienteId);
-    return cliente ? (cliente.name || cliente.nome) : "Cliente não encontrado";
-  }, [clientes]);
-  
-  // Função para obter produto por ID
-  const buscarNomeProduto = useCallback((produtoId) => {
-    const produto = produtos.find((p) => p.id === produtoId);
-    return produto ? (produto.name || produto.nome) : "Produto não encontrado";
-  }, [produtos]);
+  // Formatar data relativa - CORRIGIDO
+  const formatarDataRelativa = (dataString) => {
+    if (!dataString) return 'Data desconhecida';
+    
+    try {
+      const data = new Date(dataString);
+      const agora = new Date();
+      
+      // Verificar se a data é válida
+      if (isNaN(data.getTime())) {
+        console.error('Data inválida:', dataString);
+        return 'Data inválida';
+      }
+      
+      const diffMs = agora.getTime() - data.getTime();
+      const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      
+      if (diffDias === 0) {
+        return 'Hoje';
+      } else if (diffDias === 1) {
+        return 'Ontem';
+      } else if (diffDias < 7) {
+        return `${diffDias} dias atrás`;
+      } else {
+        return data.toLocaleDateString('pt-BR');
+      }
+    } catch (e) {
+      console.error('Erro ao formatar data:', e);
+      return 'Data inválida';
+    }
+  };
 
   // Formatar status de venda
   const obterStatusVenda = (status) => {
@@ -97,26 +160,6 @@ const Dashboard = () => {
           texto: "Concluída", 
           cor: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
         };
-    }
-  };
-
-  // Formatar data relativa
-  const formatarDataRelativa = (dataString) => {
-    if (!dataString) return 'Data desconhecida';
-    
-    const data = new Date(dataString);
-    const agora = new Date();
-    const diffMs = agora.getTime() - data.getTime();
-    const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
-    if (diffDias === 0) {
-      return 'Hoje';
-    } else if (diffDias === 1) {
-      return 'Ontem';
-    } else if (diffDias < 7) {
-      return `${diffDias} dias atrás`;
-    } else {
-      return data.toLocaleDateString('pt-BR');
     }
   };
 
@@ -199,6 +242,7 @@ const Dashboard = () => {
                     </h3>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
+                    {vendasHoje.length} {vendasHoje.length === 1 ? 'venda' : 'vendas'} hoje - 
                     {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
                   </p>
                 </>
@@ -284,7 +328,7 @@ const Dashboard = () => {
         </Card>
       </div>
       
-      {/* Seção de Lista de Últimas Vendas */}
+      {/* Seção de Lista de Últimas Vendas - CORRIGIDA */}
       <div className="mt-4">
         <Card className="shadow-md dark:bg-slate-800 dark:text-white">
           <CardHeader>
@@ -312,9 +356,8 @@ const Dashboard = () => {
                   <div className="text-right">Valor</div>
                 </div>
                 
-                {/* Linhas de vendas */}
+                {/* Linhas de vendas - CORRIGIDAS */}
                 {dadosUltimasVendas.map((venda) => {
-                  const venda_original = vendas.find(v => v.id === venda.id);
                   const statusInfo = obterStatusVenda(venda.status);
                   
                   return (
@@ -325,20 +368,23 @@ const Dashboard = () => {
                       <div className="flex items-center gap-2">
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                            {buscarNomeCliente(venda_original?.cliente_id).substring(0, 2).toUpperCase()}
+                            {venda.cliente && venda.cliente.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-sm font-medium truncate">
-                          {buscarNomeCliente(venda_original?.cliente_id)}
+                          {venda.cliente}
                         </span>
                       </div>
                       
                       <div className="text-sm truncate">
                         {venda.name}
+                        <span className="text-xs text-muted-foreground ml-1">
+                          ({venda.quantidade} un.)
+                        </span>
                       </div>
                       
                       <div className="text-sm text-muted-foreground">
-                        {formatarDataRelativa(venda_original?.created_at || venda_original?.data_hora)}
+                        {formatarDataRelativa(venda.data_hora)}
                       </div>
                       
                       <div className="text-right">
