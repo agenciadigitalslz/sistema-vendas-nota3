@@ -15,14 +15,23 @@ export const fetchClients = async () => {
 
 // Função para adicionar um cliente
 export const addClient = async (name: string) => {
+  if (!name || name.trim() === '') {
+    throw new Error("O nome do cliente é obrigatório.")
+  }
+
   const { data, error } = await supabase
     .from('clientes')
     .insert([{ name }])
     .select()
 
-  if (error) throw error
+  if (error) {
+    console.error('Erro ao adicionar cliente:', error)
+    throw new Error(error.message || 'Erro inesperado ao adicionar cliente.')
+  }
+
   return data[0]
 }
+
 
 // Função para excluir um cliente
 export const deleteClient = async (id: number) => {
