@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { formatDateTime } from "@/lib/utils";
 
 interface SalesListProps {
   sales: DetailedSale[];
@@ -67,7 +68,7 @@ export function SalesList({
                   className={`${sale.status === 'cancelada' ? "opacity-75" : ""} dark:border-slate-700`}
                 >
                   <TableCell className="dark:text-white">{sale.id}</TableCell>
-                  <TableCell className="dark:text-white">{sale.dateTime}</TableCell>
+                  <TableCell className="dark:text-white">{formatDateTime(sale.dateTime)}</TableCell>
                   <TableCell className="dark:text-white">{sale.clientName}</TableCell>
                   <TableCell className="dark:text-white">{sale.productName}</TableCell>
                   <TableCell className="dark:text-white">{sale.quantity}</TableCell>
