@@ -1,6 +1,6 @@
-
 import { supabase } from '../lib/supabaseClient'
 import { Client } from '@/types'
+import { User, Trash, RefreshCw, Loader2, Pencil } from "lucide-react";
 
 
 const testarInsertCliente = async () => {
@@ -66,6 +66,17 @@ export const deleteClient = async (id: number) => {
   const { error } = await supabase
     .from('clientes')
     .delete()
+    .eq('id', id)
+
+  if (error) throw error
+  return true
+}
+
+// Atualizar cliente existente
+export const updateClient = async (id: number, name: string) => {
+  const { error } = await supabase
+    .from('clientes')
+    .update({ name })
     .eq('id', id)
 
   if (error) throw error
