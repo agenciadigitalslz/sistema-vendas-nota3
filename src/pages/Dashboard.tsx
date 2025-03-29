@@ -1,76 +1,14 @@
 import { useStore } from "@/store/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, XAxis, YAxis, Bar, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
-import { ShoppingCart, User, Package, RefreshCw, Clock, CheckCircle, XCircle, ArrowRight } from "lucide-react";
+import { ShoppingCart, User, Package, RefreshCw, Clock, CheckCircle, XCircle, ArrowRight, Calendar, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Tooltip } from "@/components/ui/tooltip";
-
-// Função auxiliar para gerar dados do gráfico baseado no período
-const obterDadosGraficoReceita = (vendas, periodo) => {
-  const agora = new Date();
-  const resultado = [];
-  
-  // Configurar intervalo baseado no período
-  let intervalo, pontos, formatoData;
-  switch(periodo) {
-    case "hoje":
-      intervalo = 3600000; // 1 hora em ms
-      pontos = 12;
-      formatoData = (data) => `${data.getHours()}:00`;
-      break;
-    case "semana":
-      intervalo = 86400000; // 1 dia em ms
-      pontos = 7;
-      formatoData = (data) => data.toLocaleDateString('pt-BR', { weekday: 'short' });
-      break;
-    case "mes":
-      intervalo = 86400000 * 3; // 3 dias em ms
-      pontos = 10;
-      formatoData = (data) => `${data.getDate()}/${data.getMonth() + 1}`;
-      break;
-    case "ano":
-      intervalo = 86400000 * 30; // ~1 mês em ms
-      pontos = 12;
-      formatoData = (data) => data.toLocaleDateString('pt-BR', { month: 'short' });
-      break;
-    default:
-      intervalo = 86400000 * 30; // ~1 mês em ms
-      pontos = 6;
-      formatoData = (data) => `${data.getMonth() + 1}/${data.getFullYear()}`;
-  }
-  
-  // Gerar pontos no gráfico
-  for (let i = pontos - 1; i >= 0; i--) {
-    const dataInicio = new Date(agora.getTime() - (intervalo * (i + 1)));
-    const dataFim = new Date(agora.getTime() - (intervalo * i));
-    
-    // Filtrar vendas do período
-    const vendasPeriodo = vendas.filter(venda => {
-      if (venda.status === "cancelada") return false;
-      const dataVenda = new Date(venda.created_at || venda.data_hora);
-      return dataVenda >= dataInicio && dataVenda < dataFim;
-    });
-    
-    // Calcular valor total
-    const valorTotal = vendasPeriodo.reduce((total, venda) => total + (venda.valor_total || venda.totalValue || 0), 0);
-    
-    resultado.push({
-      data: formatoData(dataInicio),
-      valor: valorTotal
-    });
-  }
-  
-  return resultado;
-};
 
 const Dashboard = () => {
-  // Unifique a chamada do useStore
+  // Obter dados da store
   const { 
     detailedSales: vendas, 
     clients: clientes, 
@@ -79,191 +17,112 @@ const Dashboard = () => {
     refreshData 
   } = useStore();
   
-  const [periodoSelecionado, setPeriodoSelecionado] = useState("hoje");
-  const [comparacaoAnterior, setComparacaoAnterior] = useState(0);
-  const [filtro, setFiltro] = useState("todas");
-  
-  // Filtrar apenas vendas ativas para cálculo de receita
-  const vendasAtivas = vendas.filter(venda => venda.status === 'ativa');
-  
-  // Calcular receita total das vendas ativas
-  const receitaVendasAtivas = vendasAtivas.reduce((sum, venda) => 
-    sum + (venda.totalValue || venda.valor_total || 0), 0);
-  
-  // Obter dados das últimas 5 vendas para o gráfico
-  const dadosVendas = vendas.slice(0, 5).map(venda => {
-    return {
-      id: venda.id,
-      name: venda.productName || buscarNomeProduto(venda.produto_id),
-      value: venda.totalValue || venda.valor_total || 0,
-      status: venda.status
-    };
-  });
+  // Filtrar vendas por período
+  const vendasHoje = useMemo(() => {
+    const hoje = new Date().toDateString();
+    return vendas.filter(venda => 
+      venda.status !== "cancelada" && 
+      new Date(venda.created_at || venda.data_hora).toDateString() === hoje
+    );
+  }, [vendas]);
 
-  const handleRefresh = () => {
-    refreshData();
-  };
+  // Vendas ativas (não canceladas)
+  const vendasAtivas = useMemo(() => 
+    vendas.filter(venda => venda.status !== "cancelada"),
+  [vendas]);
+  
+  // Calcular receitas
+  const receitaHoje = useMemo(() => 
+    vendasHoje.reduce((total, venda) => 
+      total + (venda.valor_total || venda.totalValue || 0), 0),
+  [vendasHoje]);
+  
+  const receitaTotal = useMemo(() => 
+    vendasAtivas.reduce((total, venda) => 
+      total + (venda.valor_total || venda.totalValue || 0), 0),
+  [vendasAtivas]);
 
-  // Calcular receita total filtrada por período
-  const calcularReceita = useCallback(() => {
-    if (!vendas || !vendas.length) return 0;
-    
-    const agora = new Date();
-    const filtradas = vendas.filter(venda => {
-      if (venda.status === "cancelada") return false;
-      
-      const dataVenda = new Date(venda.created_at || venda.data_hora);
-      switch(periodoSelecionado) {
-        case "hoje":
-          return dataVenda.toDateString() === agora.toDateString();
-        case "semana":
-          const umaSemanaAtras = new Date(agora);
-          umaSemanaAtras.setDate(agora.getDate() - 7);
-          return dataVenda >= umaSemanaAtras;
-        case "mes":
-          return dataVenda.getMonth() === agora.getMonth() 
-            && dataVenda.getFullYear() === agora.getFullYear();
-        case "ano":
-          return dataVenda.getFullYear() === agora.getFullYear();
-        default:
-          return true;
-      }
-    });
-    
-    return filtradas.reduce((total, venda) => 
-      total + (venda.totalValue || venda.valor_total || 0), 0);
-  }, [vendas, periodoSelecionado]);
-  
-  // Calcular comparação com período anterior
-  useEffect(() => {
-    const calcularComparacao = () => {
-      if (!vendas || !vendas.length) return 0;
-      
-      const agora = new Date();
-      const periodoAnterior = vendas.filter(venda => {
-        if (venda.status === "cancelada") return false;
-        
-        const dataVenda = new Date(venda.created_at || venda.data_hora);
-        switch(periodoSelecionado) {
-          case "hoje":
-            const ontem = new Date(agora);
-            ontem.setDate(agora.getDate() - 1);
-            return dataVenda.toDateString() === ontem.toDateString();
-          case "semana":
-            const duasSemanasAtras = new Date(agora);
-            duasSemanasAtras.setDate(agora.getDate() - 14);
-            const umaSemanaAtras = new Date(agora);
-            umaSemanaAtras.setDate(agora.getDate() - 7);
-            return dataVenda >= duasSemanasAtras && dataVenda < umaSemanaAtras;
-          case "mes":
-            const mesAnterior = new Date(agora);
-            mesAnterior.setMonth(agora.getMonth() - 1);
-            return dataVenda.getMonth() === mesAnterior.getMonth() 
-              && dataVenda.getFullYear() === mesAnterior.getFullYear();
-          case "ano":
-            return dataVenda.getFullYear() === agora.getFullYear() - 1;
-          default:
-            return false;
-        }
-      });
-      
-      const valorAnterior = periodoAnterior.reduce((total, venda) => 
-        total + (venda.totalValue || venda.valor_total || 0), 0);
-      const valorAtual = calcularReceita();
-      
-      if (valorAnterior === 0) return valorAtual > 0 ? 100 : 0;
-      
-      return Math.round(((valorAtual - valorAnterior) / valorAnterior) * 100);
-    };
-    
-    setComparacaoAnterior(calcularComparacao());
-  }, [vendas, periodoSelecionado, calcularReceita]);
-  
-  const receitaTotal = calcularReceita();
-
-  // Função para obter cliente e produto por ID
-  const buscarNomeCliente = useCallback((clienteId) => {
-    const cliente = clientes.find((c) => c.id === clienteId);
-    return cliente ? (cliente.name || cliente.nome) : "Cliente não encontrado";
-  }, [clientes]);
-  
-  const buscarNomeProduto = useCallback((produtoId) => {
-    const produto = produtos.find((p) => p.id === produtoId);
-    return produto ? (produto.name || produto.nome) : "Produto não encontrado";
-  }, [produtos]);
-  
-  // Filtrar e ordenar vendas
-  const vendasFiltradas = useMemo(() => {
-    if (!vendas || !vendas.length) return [];
-    
-    let resultado = [...vendas];
-    
-    // Aplicar filtro por status
-    if (filtro !== "todas") {
-      resultado = resultado.filter(venda => venda.status === filtro);
-    }
-    
+  // Dados para o gráfico de últimas 5 vendas
+  const dadosUltimasVendas = useMemo(() => {
     // Ordenar por data (mais recentes primeiro)
-    resultado.sort((a, b) => {
+    const ordenadas = [...vendas].sort((a, b) => {
       const dateA = new Date(a.created_at || a.data_hora).getTime();
       const dateB = new Date(b.created_at || b.data_hora).getTime();
       return dateB - dateA;
     });
     
-    // Limitar a 5 vendas
-    return resultado.slice(0, 5);
-  }, [vendas, filtro]);
+    // Pegar as 5 primeiras
+    return ordenadas.slice(0, 5).map(venda => {
+      const produto = produtos.find(p => p.id === venda.produto_id);
+      return {
+        id: venda.id,
+        name: produto?.nome || produto?.name || "Produto",
+        value: venda.valor_total || venda.totalValue || 0,
+        date: new Date(venda.created_at || venda.data_hora).toLocaleDateString('pt-BR'),
+        status: venda.status
+      };
+    });
+  }, [vendas, produtos]);
+
+  // Função para obter cliente por ID
+  const buscarNomeCliente = useCallback((clienteId) => {
+    const cliente = clientes.find((c) => c.id === clienteId);
+    return cliente ? (cliente.name || cliente.nome) : "Cliente não encontrado";
+  }, [clientes]);
   
-  // Exibir status formatado com ícone
-  const StatusVenda = ({ status }) => {
-    const statusConfig = {
-      "pendente": { icon: <Clock className="h-4 w-4 text-yellow-500" />, texto: "Pendente", cor: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" },
-      "completa": { icon: <CheckCircle className="h-4 w-4 text-green-500" />, texto: "Concluída", cor: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" },
-      "cancelada": { icon: <XCircle className="h-4 w-4 text-red-500" />, texto: "Cancelada", cor: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" }
-    };
-    
-    const config = statusConfig[status] || statusConfig.pendente;
-    
-    return (
-      <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${config.cor}`}>
-        {config.icon}
-        <span>{config.texto}</span>
-      </div>
-    );
+  // Função para obter produto por ID
+  const buscarNomeProduto = useCallback((produtoId) => {
+    const produto = produtos.find((p) => p.id === produtoId);
+    return produto ? (produto.name || produto.nome) : "Produto não encontrado";
+  }, [produtos]);
+
+  // Formatar status de venda
+  const obterStatusVenda = (status) => {
+    switch(status) {
+      case "ativa":
+        return { 
+          icon: <CheckCircle className="h-4 w-4 text-green-500" />, 
+          texto: "Concluída", 
+          cor: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
+        };
+      case "cancelada":
+        return { 
+          icon: <XCircle className="h-4 w-4 text-red-500" />, 
+          texto: "Cancelada", 
+          cor: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" 
+        };
+      default:
+        return { 
+          icon: <CheckCircle className="h-4 w-4 text-green-500" />, 
+          texto: "Concluída", 
+          cor: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
+        };
+    }
   };
-  
-  // Formatar data de forma amigável
-  const formatarData = (dataString) => {
+
+  // Formatar data relativa
+  const formatarDataRelativa = (dataString) => {
     if (!dataString) return 'Data desconhecida';
     
     const data = new Date(dataString);
     const agora = new Date();
     const diffMs = agora.getTime() - data.getTime();
-    const diffSecs = Math.floor(diffMs / 1000);
-    const diffMins = Math.floor(diffSecs / 60);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
+    const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
-    if (diffDays > 0) {
-      return `${diffDays} dia${diffDays > 1 ? 's' : ''} atrás`;
-    } else if (diffHours > 0) {
-      return `${diffHours} hora${diffHours > 1 ? 's' : ''} atrás`;
-    } else if (diffMins > 0) {
-      return `${diffMins} minuto${diffMins > 1 ? 's' : ''} atrás`;
+    if (diffDias === 0) {
+      return 'Hoje';
+    } else if (diffDias === 1) {
+      return 'Ontem';
+    } else if (diffDias < 7) {
+      return `${diffDias} dias atrás`;
     } else {
-      return 'Agora mesmo';
+      return data.toLocaleDateString('pt-BR');
     }
   };
 
-  // Componente para exibir tooltip personalizado
-  const TooltipContent = ({ data }) => {
-    if (!data) return null;
-    const formattedDate = new Date(data).toLocaleString('pt-BR');
-    return (
-      <div className="bg-white p-2 rounded shadow text-xs">
-        {formattedDate}
-      </div>
-    );
+  // Atualizar dados
+  const handleRefresh = () => {
+    refreshData();
   };
 
   return (
@@ -319,104 +178,117 @@ const Dashboard = () => {
       </div>
       
       <div className="grid gap-4 md:grid-cols-2">
-        {/* Card de Receita Total aprimorado */}
-        <Card className="shadow-md dark:bg-slate-800 dark:text-white">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-lg font-semibold">Receita Total</CardTitle>
-              <Select 
-                value={periodoSelecionado} 
-                onValueChange={setPeriodoSelecionado}
-              >
-                <SelectTrigger className="w-36 h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hoje">Hoje</SelectItem>
-                  <SelectItem value="semana">Últimos 7 dias</SelectItem>
-                  <SelectItem value="mes">Este mês</SelectItem>
-                  <SelectItem value="ano">Este ano</SelectItem>
-                  <SelectItem value="total">Total</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Coluna da esquerda: Cards de Receita */}
+        <div className="space-y-4">
+          {/* Card de Receita Hoje */}
+          <Card className="shadow-md dark:bg-slate-800 dark:text-white">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-lg font-semibold">Receita Hoje</CardTitle>
+                <Calendar className="h-5 w-5 text-blue-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <Skeleton className="h-16 w-full" />
+              ) : (
+                <>
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                      R$ {receitaHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Card de Receita Total */}
+          <Card className="shadow-md dark:bg-slate-800 dark:text-white">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-lg font-semibold">Receita Total</CardTitle>
+                <TrendingUp className="h-5 w-5 text-emerald-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <Skeleton className="h-16 w-full" />
+              ) : (
+                <>
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                      R$ {receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Total acumulado de vendas ativas
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Coluna da direita: Gráfico de Últimas Vendas */}
+        <Card className="dark:bg-slate-800 dark:text-white">
+          <CardHeader>
+            <CardTitle>Últimas Vendas</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="h-80">
             {loading ? (
-              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-full w-full" />
+            ) : dadosUltimasVendas.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dadosUltimasVendas}>
+                  <XAxis 
+                    dataKey="name" 
+                    stroke="#888888" 
+                    fontSize={12} 
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    stroke="#888888"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `R$${value}`}
+                  />
+                  <RechartsTooltip 
+                    formatter={(value) => [`R$ ${Number(value).toFixed(2)}`, 'Valor']}
+                    labelFormatter={(name) => `Produto: ${name}`}
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+                      borderRadius: '6px',
+                      border: '1px solid #e2e8f0'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="value" 
+                    fill="#3b82f6"
+                    radius={[4, 4, 0, 0]}
+                    className="fill-blue-500 dark:fill-blue-400"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             ) : (
-              <>
-                <div className="flex items-baseline gap-2">
-                  <h3 className="text-3xl font-bold">
-                    R$ {receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </h3>
-                  <span className={`text-sm font-medium px-2 py-1 rounded-full ${
-                    comparacaoAnterior > 0 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                  }`}>
-                    {comparacaoAnterior > 0 ? '+' : ''}{comparacaoAnterior}%
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Comparado ao período anterior
-                </p>
-                
-                {/* Mini gráfico de tendência */}
-                <div className="mt-4 h-16">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart 
-                      data={obterDadosGraficoReceita(vendas, periodoSelecionado)} 
-                      margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
-                    >
-                      <defs>
-                        <linearGradient id="receita" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <Area 
-                        type="monotone" 
-                        dataKey="valor" 
-                        stroke="#8884d8" 
-                        fillOpacity={1} 
-                        fill="url(#receita)" 
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </>
+              <div className="h-full flex items-center justify-center text-gray-400">
+                Nenhuma venda registrada
+              </div>
             )}
           </CardContent>
         </Card>
-        
-        {/* Card de Últimas Vendas aprimorado */}
+      </div>
+      
+      {/* Seção de Lista de Últimas Vendas */}
+      <div className="mt-4">
         <Card className="shadow-md dark:bg-slate-800 dark:text-white">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-lg font-semibold">Últimas Vendas</CardTitle>
-              <div className="flex gap-1">
-                <RadioGroup 
-                  defaultValue="todas" 
-                  value={filtro}
-                  onValueChange={setFiltro}
-                  className="flex gap-2"
-                >
-                  <div className="flex items-center space-x-1">
-                    <RadioGroupItem value="todas" id="todas" className="h-3.5 w-3.5" />
-                    <Label htmlFor="todas" className="text-xs cursor-pointer">Todas</Label>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <RadioGroupItem value="completa" id="completa" className="h-3.5 w-3.5" />
-                    <Label htmlFor="completa" className="text-xs cursor-pointer">Concluídas</Label>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <RadioGroupItem value="cancelada" id="cancelada" className="h-3.5 w-3.5" />
-                    <Label htmlFor="cancelada" className="text-xs cursor-pointer">Canceladas</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </div>
+          <CardHeader>
+            <CardTitle>Detalhes das Últimas Vendas</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -425,48 +297,64 @@ const Dashboard = () => {
                   <Skeleton className="h-16 w-full" />
                 </div>
               ))
-            ) : vendasFiltradas.length === 0 ? (
+            ) : dadosUltimasVendas.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
                 <ShoppingCart className="h-10 w-10 mb-2 opacity-30" />
                 <p>Nenhuma venda encontrada</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {vendasFiltradas.map((venda) => (
-                  <div 
-                    key={venda.id} 
-                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex gap-3 items-center">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {buscarNomeCliente(venda.cliente_id).substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-sm">{buscarNomeCliente(venda.cliente_id)}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{buscarNomeProduto(venda.produto_id)}</span>
-                          <span>•</span>
-                          <span>{venda.quantidade} un.</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <div className="font-semibold">
-                        R$ {(venda.valor_total || venda.totalValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </div>
+                {/* Cabeçalho da tabela */}
+                <div className="grid grid-cols-4 gap-4 font-medium text-sm px-4 py-2 border-b">
+                  <div>Cliente</div>
+                  <div>Produto</div>
+                  <div>Data</div>
+                  <div className="text-right">Valor</div>
+                </div>
+                
+                {/* Linhas de vendas */}
+                {dadosUltimasVendas.map((venda) => {
+                  const venda_original = vendas.find(v => v.id === venda.id);
+                  const statusInfo = obterStatusVenda(venda.status);
+                  
+                  return (
+                    <div 
+                      key={venda.id} 
+                      className="grid grid-cols-4 gap-4 items-center px-4 py-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
                       <div className="flex items-center gap-2">
-                        <StatusVenda status={venda.status} />
-                        <div className="tooltip-wrapper" data-tooltip={new Date(venda.created_at || venda.data_hora).toLocaleString('pt-BR')}>
-                          <span className="text-xs text-muted-foreground">
-                            {formatarData(venda.created_at || venda.data_hora)}
-                          </span>
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                            {buscarNomeCliente(venda_original?.cliente_id).substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium truncate">
+                          {buscarNomeCliente(venda_original?.cliente_id)}
+                        </span>
+                      </div>
+                      
+                      <div className="text-sm truncate">
+                        {venda.name}
+                      </div>
+                      
+                      <div className="text-sm text-muted-foreground">
+                        {formatarDataRelativa(venda_original?.created_at || venda_original?.data_hora)}
+                      </div>
+                      
+                      <div className="text-right">
+                        <div className="font-semibold">
+                          R$ {venda.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </div>
+                        <div className="flex justify-end mt-1">
+                          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${statusInfo.cor}`}>
+                            {statusInfo.icon}
+                            <span>{statusInfo.texto}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 
                 <Button variant="ghost" className="w-full text-sm mt-2">
                   Ver todas as vendas
