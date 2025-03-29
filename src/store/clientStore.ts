@@ -2,6 +2,22 @@
 import { supabase } from '../lib/supabaseClient'
 import { Client } from '@/types'
 
+
+const testarInsertCliente = async () => {
+  const { data, error } = await supabase
+    .from('clientes')
+    .insert([{ name: 'Cliente Teste' }])
+    .select()
+
+  console.log('Resultado do insert:', { data, error })
+  if (error) {
+    alert(`Erro Supabase: ${error.message}\n\nDetalhes: ${error.details || 'n/a'}`)
+  } else {
+    alert('Cliente inserido com sucesso!')
+  }
+}
+
+
 // Função para buscar todos os clientes
 export const fetchClients = async () => {
   const { data, error } = await supabase
