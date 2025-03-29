@@ -1,7 +1,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Client, Product, Sale } from '@/types';
+import { Client, Product, Sale, SaleStatus } from '@/types';
 
 interface StoreState {
   clients: Client[];
@@ -16,6 +16,7 @@ interface StoreState {
   updateProductStock: (id: number, quantityChange: number) => void;
   // Sale actions
   createSale: (clientId: number, productId: number, quantity: number) => Sale;
+  cancelSale: (id: number) => void;
   deleteSale: (id: number) => void;
 }
 
@@ -37,6 +38,14 @@ export const useStore = create<StoreState>()(
       },
       
       deleteClient: (id: number) => {
+        const { sales } = get();
+        // Check if client has any active sales (matching SQL ON DELETE RESTRICT)
+        const hasActiveSales = sales.some(sale => sale.clientId === id && sale.status === 'ativa');
+        
+        if (hasActiveSales) {
+          throw new Error("Cannot delete client with active sales");
+        }
+        
         set((state) => ({
           clients: state.clients.filter(client => client.id !== id)
         }));
@@ -53,6 +62,14 @@ export const useStore = create<StoreState>()(
       },
       
       deleteProduct: (id: number) => {
+        const { sales } = get();
+        // Check if product has any active sales (matching SQL ON DELETE RESTRICT)
+        const hasActiveSales = sales.some(sale => sale.productId === id && sale.status === 'ativa');
+        
+        if (hasActiveSales) {
+          throw new Error("Cannot delete product with active sales");
+        }
+        
         set((state) => ({
           products: state.products.filter(product => product.id !== id)
         }));
@@ -77,6 +94,10 @@ export const useStore = create<StoreState>()(
           throw new Error("Product not found");
         }
         
+        if (product.quantity < quantity) {
+          throw new Error("Insufficient stock");
+        }
+        
         const totalValue = quantity * product.value;
         const newId = sales.length > 0 ? Math.max(...sales.map(s => s.id)) + 1 : 1;
         const dateTime = new Date().toLocaleString();
@@ -87,7 +108,8 @@ export const useStore = create<StoreState>()(
           productId,
           quantity,
           totalValue,
-          dateTime
+          dateTime,
+          status: 'ativa' as SaleStatus
         };
         
         // Update the stock
@@ -100,18 +122,42 @@ export const useStore = create<StoreState>()(
         return newSale;
       },
       
+      cancelSale: (id: number) => {
+        const { sales, updateProductStock } = get();
+        const sale = sales.find(s => s.id === id);
+        
+        if (!sale) {
+          throw new Error("Sale not found");
+        }
+        
+        if (sale.status === 'cancelada') {
+          throw new Error("Sale already cancelled");
+        }
+        
+        // Restore the product quantity
+        updateProductStock(sale.productId, sale.quantity);
+        
+        set((state) => ({
+          sales: state.sales.map(s => 
+            s.id === id 
+              ? { ...s, status: 'cancelada' as SaleStatus } 
+              : s
+          )
+        }));
+      },
+      
       deleteSale: (id: number) => {
         const { sales, updateProductStock } = get();
         const sale = sales.find(s => s.id === id);
         
-        if (sale) {
+        if (sale && sale.status === 'ativa') {
           // Restore the product quantity
           updateProductStock(sale.productId, sale.quantity);
-          
-          set((state) => ({
-            sales: state.sales.filter(s => s.id !== id)
-          }));
         }
+        
+        set((state) => ({
+          sales: state.sales.filter(s => s.id !== id)
+        }));
       }
     }),
     {

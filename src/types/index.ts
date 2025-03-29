@@ -13,6 +13,8 @@ export interface Product {
   value: number;
 }
 
+export type SaleStatus = 'ativa' | 'cancelada';
+
 export interface Sale {
   id: number;
   clientId: number;
@@ -20,6 +22,7 @@ export interface Sale {
   quantity: number;
   totalValue: number;
   dateTime: string;
+  status: SaleStatus;
 }
 
 // Type for sale with product and client details
