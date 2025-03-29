@@ -1,8 +1,16 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+}
+
+@media screen and (max-width: 768px) {
+  #root {
+    max-width: 100%;
+    padding: 1rem;
+  }
 }
 
 .logo {
@@ -43,19 +51,21 @@
 
 /* Estilos para dispositivos móveis */
 @media screen and (max-width: 768px) {
-  #root {
-    max-width: 100%;
-    padding: 1rem;
+  /* Adiciona espaço na parte inferior para o menu fixo */
+  main {
+    padding-bottom: 4rem;
   }
-
+  
   /* Estilos específicos para o menu mobile */
-  .menu-mobile {
-    display: block;
+  .mobile-menu {
+    display: flex;
     position: fixed;
-    top: 0;
+    bottom: 0;
     left: 0;
     width: 100%;
     background: var(--background);
     z-index: 1000;
+    border-top: 1px solid var(--border);
   }
 }
+
