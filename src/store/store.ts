@@ -25,6 +25,7 @@ interface DataState {
   // Client actions
   addClient: (name: string) => Promise<void>;
   deleteClient: (id: number) => Promise<void>;
+  updateClient: (id: number, name: string) => Promise<void>;
   
   // Product actions
   addProduct: (name: string, quantity: number, value: number) => Promise<void>;
@@ -35,9 +36,6 @@ interface DataState {
   createSale: (clientId: number, productId: number, quantity: number) => Promise<DetailedSale>;
   cancelSale: (id: number) => Promise<void>;
   deleteSale: (id: number) => Promise<void>;
-  
-  // New actions
-  updateClient: (id: number, name: string) => Promise<void>;
 }
 
 // Store para o tema
