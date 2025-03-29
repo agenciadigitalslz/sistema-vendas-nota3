@@ -16,6 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Client } from "@/types";
 
 const ClientsPage = () => {
   const { clients, detailedSales, addClient, deleteClient, updateClient, isLoading, refreshData } = useStore();
@@ -103,7 +104,7 @@ const ClientsPage = () => {
   };
 
   // Função para iniciar edição
-  const startEdit = (client) => {
+  const startEdit = (client: Client) => {
     setEditingClient(client);
     setEditName(client.name);
     setEditDialogOpen(true);
