@@ -1,9 +1,8 @@
-
 import { create } from 'zustand';
 import { Client, Product, Sale, DetailedSale } from '@/types';
 import { fetchClients, addClient as apiAddClient, deleteClient as apiDeleteClient } from './clientStore';
 import { fetchProducts, addProduct as apiAddProduct, deleteProduct as apiDeleteProduct } from './productStore';
-import { fetchSales, fetchDetailedSales, createSale as apiCreateSale, cancelSale as apiCancelSale } from './saleStore';
+import { fetchSales, fetchDetailedSales, createSale as apiCreateSale, cancelSale as apiCancelSale, deleteSale as apiDeleteSale } from './saleStore';
 
 interface ThemeState {
   isDarkMode: boolean;
@@ -33,6 +32,7 @@ interface DataState {
   // Sale actions
   createSale: (clientId: number, productId: number, quantity: number) => Promise<DetailedSale>;
   cancelSale: (id: number) => Promise<void>;
+  deleteSale: (id: number) => Promise<void>;
 }
 
 // Store para o tema
@@ -232,6 +232,26 @@ export const useStore = create<DataState>()((set, get) => ({
       console.error('Erro ao cancelar venda:', error);
       set({ 
         error: error instanceof Error ? error.message : 'Erro ao cancelar venda', 
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  deleteSale: async (id: number) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      await apiDeleteSale(id);
+      
+      // Atualizar dados após a exclusão (produtos e vendas)
+      await get().refreshData();
+      
+      set({ isLoading: false });
+    } catch (error) {
+      console.error('Erro ao excluir venda:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Erro ao excluir venda', 
         isLoading: false 
       });
       throw error;

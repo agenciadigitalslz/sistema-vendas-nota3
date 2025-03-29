@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useStore } from "@/store/store";
 import { DetailedSale } from "@/types";
@@ -7,30 +6,38 @@ import { NewSaleForm } from "@/components/sales/NewSaleForm";
 import { SalesList } from "@/components/sales/SalesList";
 import { InvoiceDialog } from "@/components/sales/InvoiceDialog";
 import { CancelSaleDialog } from "@/components/sales/CancelSaleDialog";
+import { DeleteSaleDialog } from "@/components/sales/DeleteSaleDialog";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 
 const SalesPage = () => {
-  const { detailedSales, cancelSale, isLoading, refreshData } = useStore();
+  const { detailedSales, cancelSale, deleteSale, isLoading, refreshData } = useStore();
   const { toast } = useToast();
   
   const [invoiceOpen, setInvoiceOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<number | null>(null);
   const [currentSale, setCurrentSale] = useState<DetailedSale | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSaleCreated = (sale: DetailedSale) => {
     setCurrentSale(sale);
     setInvoiceOpen(true);
   };
 
-  const confirmDelete = (id: number) => {
+  const confirmCancel = (id: number) => {
     setSelectedSaleId(id);
-    setDialogOpen(true);
+    setCancelDialogOpen(true);
   };
 
-  const handleDelete = async () => {
+  const confirmDeletePermanent = (id: number) => {
+    setSelectedSaleId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleCancel = async () => {
     if (selectedSaleId) {
       setIsCancelling(true);
       
@@ -49,7 +56,31 @@ const SalesPage = () => {
         });
       } finally {
         setIsCancelling(false);
-        setDialogOpen(false);
+        setCancelDialogOpen(false);
+      }
+    }
+  };
+
+  const handleDeletePermanent = async () => {
+    if (selectedSaleId) {
+      setIsDeleting(true);
+      
+      try {
+        await deleteSale(selectedSaleId);
+        
+        toast({
+          title: "Venda excluída",
+          description: "A venda foi excluída permanentemente com sucesso.",
+        });
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: error instanceof Error ? error.message : "Erro ao excluir venda.",
+        });
+      } finally {
+        setIsDeleting(false);
+        setDeleteDialogOpen(false);
       }
     }
   };
@@ -70,9 +101,7 @@ const SalesPage = () => {
         <h1 className="text-3xl font-bold">Gerenciamento de Vendas</h1>
         <Button 
           onClick={() => refreshData()} 
-          variant="outline" 
-          size="sm"
-          className="flex gap-2 items-center"
+          className="flex gap-2 items-center bg-background border border-input hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3"
           disabled={isLoading}
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -92,15 +121,23 @@ const SalesPage = () => {
       <SalesList 
         sales={detailedSales} 
         onShowInvoice={showInvoice} 
-        onConfirmDelete={confirmDelete} 
+        onConfirmDelete={confirmCancel} 
+        onConfirmDeletePermanent={confirmDeletePermanent}
         isLoading={isLoading}
       />
       
       <CancelSaleDialog 
-        open={dialogOpen} 
-        onOpenChange={setDialogOpen} 
-        onConfirm={handleDelete}
+        open={cancelDialogOpen} 
+        onOpenChange={setCancelDialogOpen} 
+        onConfirm={handleCancel}
         isCancelling={isCancelling}
+      />
+      
+      <DeleteSaleDialog 
+        open={deleteDialogOpen} 
+        onOpenChange={setDeleteDialogOpen} 
+        onConfirm={handleDeletePermanent}
+        isDeleting={isDeleting}
       />
       
       <InvoiceDialog 

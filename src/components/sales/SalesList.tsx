@@ -1,4 +1,3 @@
-
 import { DetailedSale } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,10 +16,17 @@ interface SalesListProps {
   sales: DetailedSale[];
   onShowInvoice: (sale: DetailedSale) => void;
   onConfirmDelete: (id: number) => void;
+  onConfirmDeletePermanent: (id: number) => void;
   isLoading: boolean;
 }
 
-export function SalesList({ sales, onShowInvoice, onConfirmDelete, isLoading }: SalesListProps) {
+export function SalesList({ 
+  sales, 
+  onShowInvoice, 
+  onConfirmDelete, 
+  onConfirmDeletePermanent,
+  isLoading 
+}: SalesListProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
@@ -68,7 +74,6 @@ export function SalesList({ sales, onShowInvoice, onConfirmDelete, isLoading }: 
                   <TableCell className="dark:text-white">R$ {sale.totalValue.toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge 
-                      variant={sale.status === 'ativa' ? "default" : "destructive"}
                       className={sale.status === 'ativa' 
                         ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100" 
                         : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
@@ -80,19 +85,25 @@ export function SalesList({ sales, onShowInvoice, onConfirmDelete, isLoading }: 
                   <TableCell>
                     <div className="flex gap-2">
                       <Button
-                        variant="ghost"
-                        size="icon"
+                        className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                         onClick={() => onShowInvoice(sale)}
                       >
                         <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </Button>
                       {sale.status === 'ativa' && (
                         <Button
-                          variant="ghost"
-                          size="icon"
+                          className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                           onClick={() => onConfirmDelete(sale.id)}
                         >
                           <Trash className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
+                      {sale.status === 'cancelada' && (
+                        <Button
+                          className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                          onClick={() => onConfirmDeletePermanent(sale.id)}
+                        >
+                          <Trash className="h-4 w-4 text-red-800" />
                         </Button>
                       )}
                     </div>

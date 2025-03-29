@@ -102,3 +102,14 @@ export const cancelSale = async (id: number) => {
   await updateProductStock(sale.productId, sale.quantity)
   return true
 }
+
+// Deletar venda permanentemente
+export const deleteSale = async (id: number) => {
+  const { error } = await supabase
+    .from('vendas')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+  return true
+}
