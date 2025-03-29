@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { Client, Product, Sale, DetailedSale } from '@/types';
-import { fetchClients, addClient as apiAddClient, deleteClient as apiDeleteClient } from './clientStore';
+import { fetchClients, addClient as apiAddClient, deleteClient as apiDeleteClient, apiUpdateClient } from './clientStore';
 import { fetchProducts, addProduct as apiAddProduct, deleteProduct as apiDeleteProduct, updateProduct as apiUpdateProduct } from './productStore';
 import { fetchSales, fetchDetailedSales, createSale as apiCreateSale, cancelSale as apiCancelSale, deleteSale as apiDeleteSale } from './saleStore';
+
 
 interface ThemeState {
   isDarkMode: boolean;
@@ -34,6 +35,9 @@ interface DataState {
   createSale: (clientId: number, productId: number, quantity: number) => Promise<DetailedSale>;
   cancelSale: (id: number) => Promise<void>;
   deleteSale: (id: number) => Promise<void>;
+  
+  // New actions
+  updateClient: (id: number, name: string) => Promise<void>;
 }
 
 // Store para o tema
@@ -141,6 +145,28 @@ export const useStore = create<DataState>()((set, get) => ({
       set({ 
         error: error instanceof Error ? error.message : 'Erro ao excluir cliente', 
         isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  updateClient: async (id: number, name: string) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      await apiUpdateClient(id, name);
+
+      set(state => ({
+        clients: state.clients.map(client =>
+          client.id === id ? { ...client, name } : client
+        ),
+        isLoading: false,
+      }));
+    } catch (error) {
+      console.error('Erro ao atualizar cliente:', error);
+      set({
+        error: error instanceof Error ? error.message : 'Erro ao atualizar cliente',
+        isLoading: false,
       });
       throw error;
     }
