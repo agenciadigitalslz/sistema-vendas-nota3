@@ -1,13 +1,15 @@
 import { useStore } from "@/store/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, XAxis, YAxis, Bar, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { BarChart, XAxis, YAxis, Bar, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { ShoppingCart, User, Package, RefreshCw, Clock, CheckCircle, XCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useVendasStore } from '@/store/vendasStore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Avatar, AvatarFallback, RadioGroup, RadioGroupItem, Label } from '@/components/ui';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Tooltip } from "@/components/ui/tooltip";
 
 // Função auxiliar para gerar dados do gráfico baseado no período
 const obterDadosGraficoReceita = (vendas, periodo) => {
@@ -45,18 +47,18 @@ const obterDadosGraficoReceita = (vendas, periodo) => {
   
   // Gerar pontos no gráfico
   for (let i = pontos - 1; i >= 0; i--) {
-    const dataInicio = new Date(agora - (intervalo * (i + 1)));
-    const dataFim = new Date(agora - (intervalo * i));
+    const dataInicio = new Date(agora.getTime() - (intervalo * (i + 1)));
+    const dataFim = new Date(agora.getTime() - (intervalo * i));
     
     // Filtrar vendas do período
     const vendasPeriodo = vendas.filter(venda => {
       if (venda.status === "cancelada") return false;
-      const dataVenda = new Date(venda.data_hora);
+      const dataVenda = new Date(venda.created_at || venda.data_hora);
       return dataVenda >= dataInicio && dataVenda < dataFim;
     });
     
     // Calcular valor total
-    const valorTotal = vendasPeriodo.reduce((total, venda) => total + (venda.valor_total || 0), 0);
+    const valorTotal = vendasPeriodo.reduce((total, venda) => total + (venda.valor_total || venda.totalValue || 0), 0);
     
     resultado.push({
       data: formatoData(dataInicio),
@@ -68,25 +70,33 @@ const obterDadosGraficoReceita = (vendas, periodo) => {
 };
 
 const Dashboard = () => {
-  const { detailedSales, clients, products, isLoading, refreshData } = useStore();
-  const { vendas, loading, produtos, clientes } = useVendasStore();
+  // Unifique a chamada do useStore
+  const { 
+    detailedSales: vendas, 
+    clients: clientes, 
+    products: produtos, 
+    isLoading: loading, 
+    refreshData 
+  } = useStore();
+  
   const [periodoSelecionado, setPeriodoSelecionado] = useState("hoje");
   const [comparacaoAnterior, setComparacaoAnterior] = useState(0);
   const [filtro, setFiltro] = useState("todas");
   
   // Filtrar apenas vendas ativas para cálculo de receita
-  const activeSales = detailedSales.filter(sale => sale.status === 'ativa');
+  const vendasAtivas = vendas.filter(venda => venda.status === 'ativa');
   
   // Calcular receita total das vendas ativas
-  const totalRevenue = activeSales.reduce((sum, sale) => sum + sale.totalValue, 0);
+  const receitaVendasAtivas = vendasAtivas.reduce((sum, venda) => 
+    sum + (venda.totalValue || venda.valor_total || 0), 0);
   
   // Obter dados das últimas 5 vendas para o gráfico
-  const salesData = detailedSales.slice(0, 5).map(sale => {
+  const dadosVendas = vendas.slice(0, 5).map(venda => {
     return {
-      id: sale.id,
-      name: sale.productName,
-      value: sale.totalValue,
-      status: sale.status
+      id: venda.id,
+      name: venda.productName || buscarNomeProduto(venda.produto_id),
+      value: venda.totalValue || venda.valor_total || 0,
+      status: venda.status
     };
   });
 
@@ -96,13 +106,13 @@ const Dashboard = () => {
 
   // Calcular receita total filtrada por período
   const calcularReceita = useCallback(() => {
-    if (!vendas.length) return 0;
+    if (!vendas || !vendas.length) return 0;
     
     const agora = new Date();
     const filtradas = vendas.filter(venda => {
       if (venda.status === "cancelada") return false;
       
-      const dataVenda = new Date(venda.data_hora);
+      const dataVenda = new Date(venda.created_at || venda.data_hora);
       switch(periodoSelecionado) {
         case "hoje":
           return dataVenda.toDateString() === agora.toDateString();
@@ -120,17 +130,20 @@ const Dashboard = () => {
       }
     });
     
-    return filtradas.reduce((total, venda) => total + (venda.valor_total || 0), 0);
+    return filtradas.reduce((total, venda) => 
+      total + (venda.totalValue || venda.valor_total || 0), 0);
   }, [vendas, periodoSelecionado]);
   
   // Calcular comparação com período anterior
   useEffect(() => {
     const calcularComparacao = () => {
+      if (!vendas || !vendas.length) return 0;
+      
       const agora = new Date();
       const periodoAnterior = vendas.filter(venda => {
         if (venda.status === "cancelada") return false;
         
-        const dataVenda = new Date(venda.data_hora);
+        const dataVenda = new Date(venda.created_at || venda.data_hora);
         switch(periodoSelecionado) {
           case "hoje":
             const ontem = new Date(agora);
@@ -154,10 +167,11 @@ const Dashboard = () => {
         }
       });
       
-      const valorAnterior = periodoAnterior.reduce((total, venda) => total + (venda.valor_total || 0), 0);
+      const valorAnterior = periodoAnterior.reduce((total, venda) => 
+        total + (venda.totalValue || venda.valor_total || 0), 0);
       const valorAtual = calcularReceita();
       
-      if (valorAnterior === 0) return 100; // Se não havia vendas no período anterior
+      if (valorAnterior === 0) return valorAtual > 0 ? 100 : 0;
       
       return Math.round(((valorAtual - valorAnterior) / valorAnterior) * 100);
     };
@@ -170,16 +184,18 @@ const Dashboard = () => {
   // Função para obter cliente e produto por ID
   const buscarNomeCliente = useCallback((clienteId) => {
     const cliente = clientes.find((c) => c.id === clienteId);
-    return cliente ? cliente.nome : "Cliente não encontrado";
+    return cliente ? (cliente.name || cliente.nome) : "Cliente não encontrado";
   }, [clientes]);
   
   const buscarNomeProduto = useCallback((produtoId) => {
     const produto = produtos.find((p) => p.id === produtoId);
-    return produto ? produto.nome : "Produto não encontrado";
+    return produto ? (produto.name || produto.nome) : "Produto não encontrado";
   }, [produtos]);
   
   // Filtrar e ordenar vendas
   const vendasFiltradas = useMemo(() => {
+    if (!vendas || !vendas.length) return [];
+    
     let resultado = [...vendas];
     
     // Aplicar filtro por status
@@ -188,7 +204,11 @@ const Dashboard = () => {
     }
     
     // Ordenar por data (mais recentes primeiro)
-    resultado.sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
+    resultado.sort((a, b) => {
+      const dateA = new Date(a.created_at || a.data_hora).getTime();
+      const dateB = new Date(b.created_at || b.data_hora).getTime();
+      return dateB - dateA;
+    });
     
     // Limitar a 5 vendas
     return resultado.slice(0, 5);
@@ -214,9 +234,11 @@ const Dashboard = () => {
   
   // Formatar data de forma amigável
   const formatarData = (dataString) => {
+    if (!dataString) return 'Data desconhecida';
+    
     const data = new Date(dataString);
     const agora = new Date();
-    const diffMs = agora - data;
+    const diffMs = agora.getTime() - data.getTime();
     const diffSecs = Math.floor(diffMs / 1000);
     const diffMins = Math.floor(diffSecs / 60);
     const diffHours = Math.floor(diffMins / 60);
@@ -233,6 +255,17 @@ const Dashboard = () => {
     }
   };
 
+  // Componente para exibir tooltip personalizado
+  const TooltipContent = ({ data }) => {
+    if (!data) return null;
+    const formattedDate = new Date(data).toLocaleString('pt-BR');
+    return (
+      <div className="bg-white p-2 rounded shadow text-xs">
+        {formattedDate}
+      </div>
+    );
+  };
+
   return (
     <div className="container py-6 animate-fade-in dark:text-white">
       <div className="flex justify-between items-center mb-6">
@@ -240,9 +273,9 @@ const Dashboard = () => {
         <Button 
           onClick={handleRefresh} 
           className="flex gap-2 items-center bg-background border border-input hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3"
-          disabled={isLoading}
+          disabled={loading}
         >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           Atualizar
         </Button>
       </div>
@@ -256,7 +289,7 @@ const Dashboard = () => {
             <User className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{clients.length}</div>
+            <div className="text-2xl font-bold">{clientes.length}</div>
           </CardContent>
         </Card>
         
@@ -268,7 +301,7 @@ const Dashboard = () => {
             <Package className="h-4 w-4 text-indigo-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
+            <div className="text-2xl font-bold">{produtos.length}</div>
           </CardContent>
         </Card>
         
@@ -280,74 +313,33 @@ const Dashboard = () => {
             <ShoppingCart className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{detailedSales.length}</div>
+            <div className="text-2xl font-bold">{vendas.length}</div>
           </CardContent>
         </Card>
       </div>
       
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="col-span-1 dark:bg-slate-800 dark:text-white">
-          <CardHeader>
-            <CardTitle>Receita Total (Vendas Ativas)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-              R$ {totalRevenue.toFixed(2)}
+        {/* Card de Receita Total aprimorado */}
+        <Card className="shadow-md dark:bg-slate-800 dark:text-white">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg font-semibold">Receita Total</CardTitle>
+              <Select 
+                value={periodoSelecionado} 
+                onValueChange={setPeriodoSelecionado}
+              >
+                <SelectTrigger className="w-36 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hoje">Hoje</SelectItem>
+                  <SelectItem value="semana">Últimos 7 dias</SelectItem>
+                  <SelectItem value="mes">Este mês</SelectItem>
+                  <SelectItem value="ano">Este ano</SelectItem>
+                  <SelectItem value="total">Total</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="col-span-1 md:col-span-1 dark:bg-slate-800 dark:text-white">
-          <CardHeader>
-            <CardTitle>Últimas Vendas</CardTitle>
-          </CardHeader>
-          <CardContent className="h-80">
-            {salesData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesData}>
-                  <XAxis 
-                    dataKey="name" 
-                    stroke="#888888" 
-                    fontSize={12} 
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    stroke="#888888"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `R$${value}`}
-                  />
-                  <Tooltip 
-                    formatter={(value) => [`R$ ${Number(value).toFixed(2)}`, 'Valor']}
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(255, 255, 255, 0.8)', 
-                      borderRadius: '6px',
-                      border: '1px solid #e2e8f0'
-                    }}
-                  />
-                  <Bar 
-                    dataKey="value" 
-                    fill="#3b82f6"
-                    radius={[4, 4, 0, 0]}
-                    className="fill-blue-500 dark:fill-blue-400"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">
-                Nenhuma venda registrada
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="col-span-1 dark:bg-slate-800 dark:text-white">
-          <CardHeader>
-            <CardTitle>Receita Total</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -398,11 +390,35 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         
-        <Card className="col-span-1 md:col-span-1 dark:bg-slate-800 dark:text-white">
-          <CardHeader>
-            <CardTitle>Últimas Vendas</CardTitle>
+        {/* Card de Últimas Vendas aprimorado */}
+        <Card className="shadow-md dark:bg-slate-800 dark:text-white">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg font-semibold">Últimas Vendas</CardTitle>
+              <div className="flex gap-1">
+                <RadioGroup 
+                  defaultValue="todas" 
+                  value={filtro}
+                  onValueChange={setFiltro}
+                  className="flex gap-2"
+                >
+                  <div className="flex items-center space-x-1">
+                    <RadioGroupItem value="todas" id="todas" className="h-3.5 w-3.5" />
+                    <Label htmlFor="todas" className="text-xs cursor-pointer">Todas</Label>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <RadioGroupItem value="completa" id="completa" className="h-3.5 w-3.5" />
+                    <Label htmlFor="completa" className="text-xs cursor-pointer">Concluídas</Label>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <RadioGroupItem value="cancelada" id="cancelada" className="h-3.5 w-3.5" />
+                    <Label htmlFor="cancelada" className="text-xs cursor-pointer">Canceladas</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="h-80">
+          <CardContent>
             {loading ? (
               Array(3).fill(0).map((_, i) => (
                 <div key={i} className="mb-4">
@@ -438,13 +454,15 @@ const Dashboard = () => {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <div className="font-semibold">
-                        R$ {venda.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        R$ {(venda.valor_total || venda.totalValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </div>
                       <div className="flex items-center gap-2">
                         <StatusVenda status={venda.status} />
-                        <Tooltip content={new Date(venda.data_hora).toLocaleString('pt-BR')}>
-                          <span className="text-xs text-muted-foreground">{formatarData(venda.data_hora)}</span>
-                        </Tooltip>
+                        <div className="tooltip-wrapper" data-tooltip={new Date(venda.created_at || venda.data_hora).toLocaleString('pt-BR')}>
+                          <span className="text-xs text-muted-foreground">
+                            {formatarData(venda.created_at || venda.data_hora)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
