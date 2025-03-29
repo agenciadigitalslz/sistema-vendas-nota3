@@ -8,11 +8,61 @@ Este projeto representa a evolução de um Sistema de Vendas originalmente desen
 
 ### Funcionalidades Principais
 
-- **Cadastro de Clientes:** Armazena nome e ID único dos clientes
-- **Cadastro de Produtos:** Armazena nome, quantidade, valor e ID único
-- **Realização de Vendas:** Solicita dados do cliente, produto e quantidade, validando estoque
-- **Consulta de Dados:** Exibe clientes, produtos e histórico de vendas
-- **Cancelamento de Vendas:** Permite cancelar vendas e retornar produtos ao estoque
+- **Cadastro de Clientes:** Criar, editar, excluir e listar clientes com controle de vendas ativas
+- **Cadastro de Produtos:** Gerenciar estoque, valor unitário e informações do produto
+- **Realização de Vendas:** Registrar vendas com cálculo automático, data/hora e verificação de estoque
+- **Cancelamento de Vendas:** Altera status para cancelada e devolve o produto ao estoque
+- **Exclusão de Vendas:** Remoção definitiva da venda do banco de dados
+- **Visualização Detalhada:** Painel com dados relacionados entre clientes, produtos e vendas
+
+## ☁️ Integração com Supabase
+
+O Supabase é usado como backend para armazenar e consultar dados em tempo real. Todas as operações CRUD são feitas diretamente via Supabase, incluindo:
+
+- `clientes`: armazenamento dos dados dos clientes
+- `produtos`: estoque e valores dos produtos
+- `vendas`: histórico e controle de vendas com status e data/hora
+
+### Políticas RLS (Row Level Security)
+
+Todas as tabelas possuem políticas ativas que permitem:
+- Leitura (`SELECT`)
+- Escrita (`INSERT`)
+- Atualização (`UPDATE`)
+- Exclusão (`DELETE`)
+
+## 🧠 Gerenciamento de Estado com Zustand
+
+A aplicação utiliza Zustand para centralizar o estado da aplicação:
+
+- Armazena listas de clientes, produtos e vendas detalhadas
+- Controla estado de carregamento e mensagens de erro
+- Inclui funções assíncronas para interação com Supabase
+- Suporte a ações: `addClient`, `updateProduct`, `cancelSale`, entre outras
+
+## 💡 Componentes e UI
+
+A interface é construída com **Tailwind CSS** e **shadcn/ui**, oferecendo:
+
+- Interface clara e responsiva
+- Tema escuro/claro com alternância dinâmica
+- Formulários com validação
+- Modais de confirmação e edição
+- Botões com ícones (`edit`, `delete`, `refresh`)
+- Toasts personalizados para feedback visual
+
+### Componentes principais
+
+- `ClientForm`: Formulário para adicionar e editar clientes
+- `ClientList`: Lista de clientes com ações inline
+- `DeleteConfirmation`: Modal de confirmação para exclusão
+- `ClientDetails`: Exibição de dados individuais
+- `ProductForm` e `SaleForm`: Interfaces para produtos e vendas
+
+## 🧪 Hooks Customizados
+
+- `useClientForm`: Gerencia o estado e validação de formulário de cliente
+- `useClientSearch`: Aplica busca e filtro na lista de clientes
 
 ## 🚀 Como Executar o Projeto
 
@@ -52,19 +102,11 @@ Siga os passos abaixo para rodar o projeto localmente:
 - **TypeScript**: Adiciona tipagem estática ao JavaScript
 - **Tailwind CSS**: Framework CSS utilitário para estilização
 - **shadcn-ui**: Biblioteca de componentes UI moderna
+- **Zustand**: Gerenciamento de estado leve e poderoso
+- **Supabase**: Backend como serviço com banco de dados PostgreSQL
 
 ## 📂 Estrutura do Projeto
 
-```
-sistema-vendas/
-├── src/
-│   ├── components/  # Componentes React
-│   ├── pages/       # Páginas da aplicação
-│   ├── styles/      # Estilos globais e utilitários
-│   └── App.tsx      # Componente principal
-├── public/          # Arquivos estáticos
-├── package.json     # Dependências e scripts
-└── vite.config.ts   # Configuração do Vite
 ```
 
 ## 🧠 Da Versão C ao Web: Processo de Evolução
