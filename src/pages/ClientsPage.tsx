@@ -210,11 +210,11 @@ const ClientsPage = () => {
                   <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3">
                     <User className="h-5 w-5 text-blue-600 dark:text-blue-300" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 mr-4">
                     <h3 className="font-medium">{client.name}</h3>
                     <p className="text-sm text-muted-foreground">ID: {client.id}</p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <Button
                       className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                       onClick={() => startEdit(client)}
