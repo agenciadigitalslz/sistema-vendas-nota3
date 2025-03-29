@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Client, Product, Sale, DetailedSale } from '@/types';
-import { fetchClients, addClient as apiAddClient, deleteClient as apiDeleteClient, apiUpdateClient } from './clientStore';
+import { fetchClients, addClient as apiAddClient, deleteClient as apiDeleteClient, updateClient as apiUpdateClient } from './clientStore';
 import { fetchProducts, addProduct as apiAddProduct, deleteProduct as apiDeleteProduct, updateProduct as apiUpdateProduct } from './productStore';
 import { fetchSales, fetchDetailedSales, createSale as apiCreateSale, cancelSale as apiCancelSale, deleteSale as apiDeleteSale } from './saleStore';
 
