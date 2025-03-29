@@ -14,7 +14,7 @@ const obterDadosGraficoReceita = (vendas, periodo) => {
   const agora = new Date();
   const resultado = [];
   
-  // Configurar intervalo baseado no período.
+  // Configurar intervalo baseado no período
   let intervalo, pontos, formatoData;
   switch(periodo) {
     case "hoje":
