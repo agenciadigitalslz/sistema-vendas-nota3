@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Client, Product, Sale, DetailedSale } from '@/types';
 import { fetchClients, addClient as apiAddClient, deleteClient as apiDeleteClient } from './clientStore';
-import { fetchProducts, addProduct as apiAddProduct, deleteProduct as apiDeleteProduct } from './productStore';
+import { fetchProducts, addProduct as apiAddProduct, deleteProduct as apiDeleteProduct, updateProduct as apiUpdateProduct } from './productStore';
 import { fetchSales, fetchDetailedSales, createSale as apiCreateSale, cancelSale as apiCancelSale, deleteSale as apiDeleteSale } from './saleStore';
 
 interface ThemeState {
@@ -28,6 +28,7 @@ interface DataState {
   // Product actions
   addProduct: (name: string, quantity: number, value: number) => Promise<void>;
   deleteProduct: (id: number) => Promise<void>;
+  updateProduct: (id: number, name: string, quantity: number, value: number) => Promise<void>;
   
   // Sale actions
   createSale: (clientId: number, productId: number, quantity: number) => Promise<DetailedSale>;
@@ -178,6 +179,32 @@ export const useStore = create<DataState>()((set, get) => ({
       console.error('Erro ao excluir produto:', error);
       set({ 
         error: error instanceof Error ? error.message : 'Erro ao excluir produto', 
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  updateProduct: async (id: number, name: string, quantity: number, value: number) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      await apiUpdateProduct(id, name, quantity, value);
+      
+      // Atualizar a lista de produtos
+      set(state => ({ 
+        products: state.products.map(product => 
+          product.id === id 
+            ? { ...product, name, quantity, value } 
+            : product
+        ),
+        isLoading: false
+      }));
+      
+    } catch (error) {
+      console.error('Erro ao atualizar produto:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Erro ao atualizar produto', 
         isLoading: false 
       });
       throw error;

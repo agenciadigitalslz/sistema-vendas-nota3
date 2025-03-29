@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Package, Trash, RefreshCw, Loader2 } from "lucide-react";
+import { Package, Trash, RefreshCw, Loader2, Pencil } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const ProductsPage = () => {
-  const { products, detailedSales, addProduct, deleteProduct, isLoading, refreshData } = useStore();
+  const { products, detailedSales, addProduct, deleteProduct, isLoading, refreshData, updateProduct } = useStore();
   const { toast } = useToast();
   const [newProductName, setNewProductName] = useState("");
   const [newProductQuantity, setNewProductQuantity] = useState("");
@@ -27,6 +27,12 @@ const ProductsPage = () => {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editQuantity, setEditQuantity] = useState("");
+  const [editValue, setEditValue] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleAddProduct = async () => {
     // Validar inputs
@@ -126,6 +132,69 @@ const ProductsPage = () => {
     }
   };
 
+  const startEdit = (product: Product) => {
+    setEditingProduct(product);
+    setEditName(product.name);
+    setEditQuantity(product.quantity.toString());
+    setEditValue(product.value.toFixed(2));
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateProduct = async () => {
+    if (!editingProduct) return;
+    
+    // Validar inputs
+    if (!editName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "O nome do produto não pode estar vazio.",
+      });
+      return;
+    }
+
+    const quantity = Number(editQuantity);
+    if (isNaN(quantity) || quantity < 0) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "A quantidade deve ser um número não negativo.",
+      });
+      return;
+    }
+
+    const value = Number(editValue);
+    if (isNaN(value) || value <= 0) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "O valor deve ser um número positivo.",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    
+    try {
+      await updateProduct(editingProduct.id, editName, quantity, value);
+      
+      toast({
+        title: "Produto atualizado",
+        description: "O produto foi atualizado com sucesso.",
+      });
+      
+      setEditDialogOpen(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao atualizar produto.",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <div className="container py-6 animate-fade-in dark:text-white">
       <div className="flex justify-between items-center mb-6">
@@ -219,13 +288,20 @@ const ProductsPage = () => {
                     <h3 className="font-medium">{product.name}</h3>
                     <p className="text-sm text-muted-foreground">ID: {product.id}</p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => confirmDelete(product.id)}
-                  >
-                    <Trash className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => startEdit(product)}
+                    >
+                      <Pencil className="h-4 w-4 text-blue-600" />
+                    </Button>
+                    <Button
+                      className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => confirmDelete(product.id)}
+                    >
+                      <Trash className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
                   <div className="bg-gray-50 dark:bg-slate-700 p-2 rounded">
@@ -267,6 +343,74 @@ const ProductsPage = () => {
                 </>
               ) : (
                 'Excluir'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <AlertDialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <AlertDialogContent className="dark:bg-slate-800 dark:text-white dark:border-slate-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Atualizar Produto</AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-gray-300">
+              Altere os dados do produto e clique em salvar para atualizar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="editName">Nome do Produto</Label>
+              <Input
+                id="editName"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="dark:bg-slate-700 dark:border-slate-600"
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="editQuantity">Quantidade em Estoque</Label>
+              <Input
+                id="editQuantity"
+                type="number"
+                min="0"
+                value={editQuantity}
+                onChange={(e) => setEditQuantity(e.target.value)}
+                className="dark:bg-slate-700 dark:border-slate-600"
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="editValue">Valor (R$)</Label>
+              <Input
+                id="editValue"
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                className="dark:bg-slate-700 dark:border-slate-600"
+              />
+            </div>
+          </div>
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel className="dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600" disabled={isUpdating}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleUpdateProduct}
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Atualizando...
+                </>
+              ) : (
+                'Salvar Alterações'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -1,4 +1,3 @@
-
 import { supabase } from '../lib/supabaseClient'
 import { Product } from '@/types'
 
@@ -68,6 +67,17 @@ export const updateProductStock = async (id: number, quantityChange: number) => 
   const { error } = await supabase
     .from('produtos')
     .update({ quantity: newQuantity })
+    .eq('id', id)
+
+  if (error) throw error
+  return true
+}
+
+// Atualizar produto existente
+export const updateProduct = async (id: number, name: string, quantity: number, value: number) => {
+  const { error } = await supabase
+    .from('produtos')
+    .update({ name, quantity, value })
     .eq('id', id)
 
   if (error) throw error
