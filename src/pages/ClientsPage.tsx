@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { User, Trash, RefreshCw, Loader2 } from "lucide-react";
+import { User, Trash, RefreshCw, Loader2, Pencil } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,13 +18,17 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const ClientsPage = () => {
-  const { clients, detailedSales, addClient, deleteClient, isLoading, refreshData } = useStore();
+  const { clients, detailedSales, addClient, deleteClient, updateClient, isLoading, refreshData } = useStore();
   const { toast } = useToast();
   const [newClientName, setNewClientName] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [editName, setEditName] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleAddClient = async () => {
     if (!newClientName.trim()) {
@@ -98,6 +102,49 @@ const ClientsPage = () => {
     }
   };
 
+  // Função para iniciar edição
+  const startEdit = (client) => {
+    setEditingClient(client);
+    setEditName(client.name);
+    setEditDialogOpen(true);
+  };
+
+  // Função para salvar a edição
+  const handleUpdateClient = async () => {
+    if (!editingClient) return;
+    
+    // Validar input
+    if (!editName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "O nome do cliente não pode estar vazio.",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    
+    try {
+      await updateClient(editingClient.id, editName);
+      
+      toast({
+        title: "Cliente atualizado",
+        description: "O cliente foi atualizado com sucesso.",
+      });
+      
+      setEditDialogOpen(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao atualizar cliente.",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <div className="container py-6 animate-fade-in dark:text-white">
       <div className="flex justify-between items-center mb-6">
@@ -166,13 +213,20 @@ const ClientsPage = () => {
                     <h3 className="font-medium">{client.name}</h3>
                     <p className="text-sm text-muted-foreground">ID: {client.id}</p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => confirmDelete(client.id)}
-                  >
-                    <Trash className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => startEdit(client)}
+                    >
+                      <Pencil className="h-4 w-4 text-blue-600" />
+                    </Button>
+                    <Button
+                      className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => confirmDelete(client.id)}
+                    >
+                      <Trash className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -204,6 +258,50 @@ const ClientsPage = () => {
                 </>
               ) : (
                 'Excluir'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Diálogo de edição de cliente */}
+      <AlertDialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <AlertDialogContent className="dark:bg-slate-800 dark:text-white dark:border-slate-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Atualizar Cliente</AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-gray-300">
+              Altere o nome do cliente e clique em salvar para atualizar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="editName">Nome do Cliente</Label>
+              <Input
+                id="editName"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="dark:bg-slate-700 dark:border-slate-600"
+              />
+            </div>
+          </div>
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel className="dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600" disabled={isUpdating}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleUpdateClient}
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Atualizando...
+                </>
+              ) : (
+                'Salvar Alterações'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
