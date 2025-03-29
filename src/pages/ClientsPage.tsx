@@ -207,22 +207,22 @@ const ClientsPage = () => {
             <Card key={client.id} className="overflow-hidden dark:bg-slate-800 dark:border-slate-700">
               <CardContent className="p-0">
                 <div className="flex items-center p-4">
-                  <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3">
+                  <div className="h-10 w-10 min-w-[2.5rem] rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3">
                     <User className="h-5 w-5 text-blue-600 dark:text-blue-300" />
                   </div>
-                  <div className="flex-1 mr-4">
-                    <h3 className="font-medium">{client.name}</h3>
+                  <div className="flex-1 mr-4 min-w-0">
+                    <h3 className="font-medium truncate">{client.name}</h3>
                     <p className="text-sm text-muted-foreground">ID: {client.id}</p>
                   </div>
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 ml-auto">
                     <Button
-                      className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                      className="inline-flex items-center justify-center h-10 w-10 min-w-[2.5rem] gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                       onClick={() => startEdit(client)}
                     >
                       <Pencil className="h-4 w-4 text-blue-600" />
                     </Button>
                     <Button
-                      className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                      className="inline-flex items-center justify-center h-10 w-10 min-w-[2.5rem] gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                       onClick={() => confirmDelete(client.id)}
                     >
                       <Trash className="h-4 w-4 text-destructive" />
