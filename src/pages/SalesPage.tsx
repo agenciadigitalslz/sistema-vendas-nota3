@@ -7,15 +7,18 @@ import { NewSaleForm } from "@/components/sales/NewSaleForm";
 import { SalesList } from "@/components/sales/SalesList";
 import { InvoiceDialog } from "@/components/sales/InvoiceDialog";
 import { CancelSaleDialog } from "@/components/sales/CancelSaleDialog";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 const SalesPage = () => {
-  const { clients, products, sales, cancelSale } = useStore();
+  const { detailedSales, cancelSale, isLoading, refreshData } = useStore();
   const { toast } = useToast();
   
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<number | null>(null);
   const [currentSale, setCurrentSale] = useState<DetailedSale | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const handleSaleCreated = (sale: DetailedSale) => {
     setCurrentSale(sale);
@@ -27,10 +30,12 @@ const SalesPage = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedSaleId) {
+      setIsCancelling(true);
+      
       try {
-        cancelSale(selectedSaleId);
+        await cancelSale(selectedSaleId);
         
         toast({
           title: "Venda cancelada",
@@ -42,9 +47,11 @@ const SalesPage = () => {
           title: "Erro",
           description: error instanceof Error ? error.message : "Erro ao cancelar venda.",
         });
+      } finally {
+        setIsCancelling(false);
+        setDialogOpen(false);
       }
     }
-    setDialogOpen(false);
   };
 
   const showInvoice = (sale: DetailedSale) => {
@@ -52,31 +59,32 @@ const SalesPage = () => {
     setInvoiceOpen(true);
   };
 
-  const detailedSales = sales.map(sale => {
-    const client = clients.find(c => c.id === sale.clientId);
-    const product = products.find(p => p.id === sale.productId);
-    
-    return {
-      ...sale,
-      clientName: client?.name || "Cliente não encontrado",
-      productName: product?.name || "Produto não encontrado",
-      productValue: product?.value || 0
-    };
-  }).sort((a, b) => b.id - a.id);
-
+  // Calcular receita ativa total
   const totalRevenue = detailedSales
     .filter(sale => sale.status === 'ativa')
     .reduce((sum, sale) => sum + sale.totalValue, 0);
 
   return (
-    <div className="container py-6 animate-fade-in">
-      <h1 className="text-3xl font-bold mb-6">Gerenciamento de Vendas</h1>
+    <div className="container py-6 animate-fade-in dark:text-white">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Gerenciamento de Vendas</h1>
+        <Button 
+          onClick={() => refreshData()} 
+          variant="outline" 
+          size="sm"
+          className="flex gap-2 items-center"
+          disabled={isLoading}
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          Atualizar
+        </Button>
+      </div>
       
       <NewSaleForm onSaleCreated={handleSaleCreated} />
       
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Histórico de Vendas</h2>
-        <div className="text-lg font-semibold text-sales-primary">
+        <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
           Total Ativo: R$ {totalRevenue.toFixed(2)}
         </div>
       </div>
@@ -85,12 +93,14 @@ const SalesPage = () => {
         sales={detailedSales} 
         onShowInvoice={showInvoice} 
         onConfirmDelete={confirmDelete} 
+        isLoading={isLoading}
       />
       
       <CancelSaleDialog 
         open={dialogOpen} 
         onOpenChange={setDialogOpen} 
-        onConfirm={handleDelete} 
+        onConfirm={handleDelete}
+        isCancelling={isCancelling}
       />
       
       <InvoiceDialog 

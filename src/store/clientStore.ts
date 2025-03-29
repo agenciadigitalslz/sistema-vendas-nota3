@@ -1,7 +1,9 @@
-// src/store/clientStore.ts
-import { supabase } from '../lib/supabaseClient'
 
-const fetchClients = async () => {
+import { supabase } from '../lib/supabaseClient'
+import { Client } from '@/types'
+
+// Função para buscar todos os clientes
+export const fetchClients = async () => {
   const { data, error } = await supabase
     .from('clientes')
     .select('*')
@@ -9,4 +11,38 @@ const fetchClients = async () => {
 
   if (error) throw error
   return data
+}
+
+// Função para adicionar um cliente
+export const addClient = async (name: string) => {
+  const { data, error } = await supabase
+    .from('clientes')
+    .insert([{ name }])
+    .select()
+
+  if (error) throw error
+  return data[0]
+}
+
+// Função para excluir um cliente
+export const deleteClient = async (id: number) => {
+  // Verificar se o cliente possui vendas ativas
+  const { data: sales } = await supabase
+    .from('vendas')
+    .select('id')
+    .eq('clientId', id)
+    .eq('status', 'ativa')
+    .limit(1)
+
+  if (sales && sales.length > 0) {
+    throw new Error("Não é possível excluir um cliente com vendas ativas")
+  }
+
+  const { error } = await supabase
+    .from('clientes')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+  return true
 }

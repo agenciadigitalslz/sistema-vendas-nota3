@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -35,19 +36,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Variáveis para menu mobile */
@@ -84,6 +78,7 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -105,7 +100,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors;
   }
 }
 
@@ -123,4 +118,39 @@
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
+}
+
+/* Estilos de carregamento */
+.loading-spinner {
+  @apply animate-spin rounded-full border-2 border-t-transparent;
+}
+
+/* Estilos de transição */
+.theme-transition {
+  @apply transition-colors duration-300;
+}
+
+/* Tratamento para tabelas responsivas */
+.responsive-table {
+  @apply w-full overflow-x-auto;
+}
+
+/* Estilos para dispositivos móveis */
+@media screen and (max-width: 768px) {
+  /* Adiciona espaço na parte inferior para o menu fixo */
+  main {
+    padding-bottom: 4rem;
+  }
+  
+  /* Estilos específicos para o menu mobile */
+  .mobile-menu {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--mobile-menu-background);
+    z-index: 1000;
+    border-top: 1px solid var(--border);
+  }
 }

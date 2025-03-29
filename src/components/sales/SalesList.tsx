@@ -1,10 +1,8 @@
 
 import { DetailedSale } from "@/types";
-import { useStore } from "@/store/store";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Trash } from "lucide-react";
+import { FileText, Trash, Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,73 +17,91 @@ interface SalesListProps {
   sales: DetailedSale[];
   onShowInvoice: (sale: DetailedSale) => void;
   onConfirmDelete: (id: number) => void;
+  isLoading: boolean;
 }
 
-export function SalesList({ sales, onShowInvoice, onConfirmDelete }: SalesListProps) {
+export function SalesList({ sales, onShowInvoice, onConfirmDelete, isLoading }: SalesListProps) {
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
   if (sales.length === 0) {
     return (
-      <div className="text-center py-10 text-gray-500">
+      <div className="text-center py-10 text-gray-500 dark:text-gray-400">
         Nenhuma venda registrada
       </div>
     );
   }
 
   return (
-    <Card>
+    <Card className="dark:bg-slate-800 dark:border-slate-700">
       <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Data/Hora</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Produto</TableHead>
-              <TableHead>Qtd</TableHead>
-              <TableHead>Valor</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sales.map((sale) => (
-              <TableRow key={sale.id} className={sale.status === 'cancelada' ? "opacity-75" : ""}>
-                <TableCell>{sale.id}</TableCell>
-                <TableCell>{sale.dateTime}</TableCell>
-                <TableCell>{sale.clientName}</TableCell>
-                <TableCell>{sale.productName}</TableCell>
-                <TableCell>{sale.quantity}</TableCell>
-                <TableCell>R$ {sale.totalValue.toFixed(2)}</TableCell>
-                <TableCell>
-                  <Badge 
-                    variant={sale.status === 'ativa' ? "default" : "destructive"}
-                  >
-                    {sale.status === 'ativa' ? 'Ativa' : 'Cancelada'}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onShowInvoice(sale)}
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="dark:border-slate-700">
+                <TableHead className="dark:text-gray-300">ID</TableHead>
+                <TableHead className="dark:text-gray-300">Data/Hora</TableHead>
+                <TableHead className="dark:text-gray-300">Cliente</TableHead>
+                <TableHead className="dark:text-gray-300">Produto</TableHead>
+                <TableHead className="dark:text-gray-300">Qtd</TableHead>
+                <TableHead className="dark:text-gray-300">Valor</TableHead>
+                <TableHead className="dark:text-gray-300">Status</TableHead>
+                <TableHead className="dark:text-gray-300">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sales.map((sale) => (
+                <TableRow 
+                  key={sale.id} 
+                  className={`${sale.status === 'cancelada' ? "opacity-75" : ""} dark:border-slate-700`}
+                >
+                  <TableCell className="dark:text-white">{sale.id}</TableCell>
+                  <TableCell className="dark:text-white">{sale.dateTime}</TableCell>
+                  <TableCell className="dark:text-white">{sale.clientName}</TableCell>
+                  <TableCell className="dark:text-white">{sale.productName}</TableCell>
+                  <TableCell className="dark:text-white">{sale.quantity}</TableCell>
+                  <TableCell className="dark:text-white">R$ {sale.totalValue.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant={sale.status === 'ativa' ? "default" : "destructive"}
+                      className={sale.status === 'ativa' 
+                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100" 
+                        : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+                      }
                     >
-                      <FileText className="h-4 w-4 text-sales-primary" />
-                    </Button>
-                    {sale.status === 'ativa' && (
+                      {sale.status === 'ativa' ? 'Ativa' : 'Cancelada'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => onConfirmDelete(sale.id)}
+                        onClick={() => onShowInvoice(sale)}
                       >
-                        <Trash className="h-4 w-4 text-destructive" />
+                        <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                      {sale.status === 'ativa' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onConfirmDelete(sale.id)}
+                        >
+                          <Trash className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

@@ -7,19 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { DetailedSale } from "@/types";
+import { Loader2 } from "lucide-react";
 
 interface NewSaleFormProps {
   onSaleCreated: (sale: DetailedSale) => void;
 }
 
 export function NewSaleForm({ onSaleCreated }: NewSaleFormProps) {
-  const { clients, products, createSale } = useStore();
+  const { clients, products, createSale, isLoading } = useStore();
   const { toast } = useToast();
   const [clientId, setClientId] = useState("");
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [isCreatingSale, setIsCreatingSale] = useState(false);
 
-  const handleCreateSale = () => {
+  const handleCreateSale = async () => {
     if (!clientId) {
       toast({
         variant: "destructive",
@@ -58,18 +60,12 @@ export function NewSaleForm({ onSaleCreated }: NewSaleFormProps) {
       return;
     }
 
+    setIsCreatingSale(true);
+    
     try {
-      const sale = createSale(Number(clientId), Number(productId), qty);
+      const sale = await createSale(Number(clientId), Number(productId), qty);
       
-      const client = clients.find(c => c.id === Number(clientId))!;
-      const detailedSale: DetailedSale = {
-        ...sale,
-        clientName: client.name,
-        productName: product.name,
-        productValue: product.value
-      };
-      
-      onSaleCreated(detailedSale);
+      onSaleCreated(sale);
       
       setClientId("");
       setProductId("");
@@ -84,24 +80,26 @@ export function NewSaleForm({ onSaleCreated }: NewSaleFormProps) {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível realizar a venda.",
+        description: error instanceof Error ? error.message : "Não foi possível realizar a venda.",
       });
+    } finally {
+      setIsCreatingSale(false);
     }
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm mb-6">
       <h2 className="text-xl font-semibold mb-4">Registrar Nova Venda</h2>
       <div className="grid gap-4 md:grid-cols-3">
         <div>
           <Label htmlFor="clientSelect">Cliente</Label>
-          <Select value={clientId} onValueChange={setClientId}>
-            <SelectTrigger id="clientSelect">
+          <Select value={clientId} onValueChange={setClientId} disabled={isLoading || isCreatingSale}>
+            <SelectTrigger id="clientSelect" className="dark:bg-slate-700 dark:border-slate-600">
               <SelectValue placeholder="Selecione um cliente" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
               {clients.map(client => (
-                <SelectItem key={client.id} value={client.id.toString()}>
+                <SelectItem key={client.id} value={client.id.toString()} className="dark:text-white">
                   {client.name}
                 </SelectItem>
               ))}
@@ -110,15 +108,15 @@ export function NewSaleForm({ onSaleCreated }: NewSaleFormProps) {
         </div>
         <div>
           <Label htmlFor="productSelect">Produto</Label>
-          <Select value={productId} onValueChange={setProductId}>
-            <SelectTrigger id="productSelect">
+          <Select value={productId} onValueChange={setProductId} disabled={isLoading || isCreatingSale}>
+            <SelectTrigger id="productSelect" className="dark:bg-slate-700 dark:border-slate-600">
               <SelectValue placeholder="Selecione um produto" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
               {products
                 .filter(product => product.quantity > 0)
                 .map(product => (
-                  <SelectItem key={product.id} value={product.id.toString()}>
+                  <SelectItem key={product.id} value={product.id.toString()} className="dark:text-white">
                     {product.name} (Estoque: {product.quantity})
                   </SelectItem>
                 ))}
@@ -134,10 +132,25 @@ export function NewSaleForm({ onSaleCreated }: NewSaleFormProps) {
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
             placeholder="Quantidade"
+            className="dark:bg-slate-700 dark:border-slate-600"
+            disabled={isLoading || isCreatingSale}
           />
         </div>
       </div>
-      <Button onClick={handleCreateSale} className="mt-4">Registrar Venda</Button>
+      <Button 
+        onClick={handleCreateSale} 
+        className="mt-4"
+        disabled={isLoading || isCreatingSale}
+      >
+        {isCreatingSale ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Registrando...
+          </>
+        ) : (
+          'Registrar Venda'
+        )}
+      </Button>
     </div>
   );
 }

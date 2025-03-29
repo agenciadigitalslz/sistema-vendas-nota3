@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Package, Trash } from "lucide-react";
+import { Package, Trash, RefreshCw, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,16 +19,18 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const ProductsPage = () => {
-  const { products, sales, addProduct, deleteProduct } = useStore();
+  const { products, detailedSales, addProduct, deleteProduct, isLoading, refreshData } = useStore();
   const { toast } = useToast();
   const [newProductName, setNewProductName] = useState("");
   const [newProductQuantity, setNewProductQuantity] = useState("");
   const [newProductValue, setNewProductValue] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleAddProduct = () => {
-    // Validate inputs
+  const handleAddProduct = async () => {
+    // Validar inputs
     if (!newProductName.trim()) {
       toast({
         variant: "destructive",
@@ -58,28 +60,42 @@ const ProductsPage = () => {
       return;
     }
 
-    addProduct(newProductName, quantity, value);
+    setIsAddingProduct(true);
     
-    // Reset form
-    setNewProductName("");
-    setNewProductQuantity("");
-    setNewProductValue("");
-    
-    toast({
-      title: "Produto adicionado",
-      description: `${newProductName} foi adicionado com sucesso.`,
-    });
+    try {
+      await addProduct(newProductName, quantity, value);
+      
+      // Resetar formulário
+      setNewProductName("");
+      setNewProductQuantity("");
+      setNewProductValue("");
+      
+      toast({
+        title: "Produto adicionado",
+        description: `${newProductName} foi adicionado com sucesso.`,
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao adicionar produto.",
+      });
+    } finally {
+      setIsAddingProduct(false);
+    }
   };
 
   const confirmDelete = (id: number) => {
-    // Check if product has sales
-    const productHasSales = sales.some(sale => sale.productId === id);
+    // Verificar se produto tem vendas ativas
+    const productHasActiveSales = detailedSales.some(
+      sale => sale.productId === id && sale.status === 'ativa'
+    );
     
-    if (productHasSales) {
+    if (productHasActiveSales) {
       toast({
         variant: "destructive",
         title: "Não é possível excluir",
-        description: "Este produto possui vendas associadas e não pode ser excluído.",
+        description: "Este produto possui vendas ativas e não pode ser excluído.",
       });
       return;
     }
@@ -88,22 +104,46 @@ const ProductsPage = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedProductId) {
-      deleteProduct(selectedProductId);
-      toast({
-        title: "Produto excluído",
-        description: "O produto foi excluído com sucesso.",
-      });
+      setIsDeleting(true);
+      
+      try {
+        await deleteProduct(selectedProductId);
+        toast({
+          title: "Produto excluído",
+          description: "O produto foi excluído com sucesso.",
+        });
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: error instanceof Error ? error.message : "Erro ao excluir produto.",
+        });
+      } finally {
+        setIsDeleting(false);
+        setDialogOpen(false);
+      }
     }
-    setDialogOpen(false);
   };
 
   return (
-    <div className="container py-6 animate-fade-in">
-      <h1 className="text-3xl font-bold mb-6">Gerenciamento de Produtos</h1>
+    <div className="container py-6 animate-fade-in dark:text-white">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Gerenciamento de Produtos</h1>
+        <Button 
+          onClick={() => refreshData()} 
+          variant="outline" 
+          size="sm"
+          className="flex gap-2 items-center"
+          disabled={isLoading}
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          Atualizar
+        </Button>
+      </div>
       
-      <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm mb-6">
         <h2 className="text-xl font-semibold mb-4">Adicionar Novo Produto</h2>
         <div className="grid gap-4 md:grid-cols-3">
           <div>
@@ -113,6 +153,7 @@ const ProductsPage = () => {
               value={newProductName}
               onChange={(e) => setNewProductName(e.target.value)}
               placeholder="Nome do produto"
+              className="dark:bg-slate-700 dark:border-slate-600"
             />
           </div>
           <div>
@@ -124,6 +165,7 @@ const ProductsPage = () => {
               value={newProductQuantity}
               onChange={(e) => setNewProductQuantity(e.target.value)}
               placeholder="Quantidade em estoque"
+              className="dark:bg-slate-700 dark:border-slate-600"
             />
           </div>
           <div>
@@ -136,25 +178,45 @@ const ProductsPage = () => {
               value={newProductValue}
               onChange={(e) => setNewProductValue(e.target.value)}
               placeholder="Valor unitário"
+              className="dark:bg-slate-700 dark:border-slate-600"
             />
           </div>
         </div>
-        <Button onClick={handleAddProduct} className="mt-4">Adicionar Produto</Button>
+        <Button onClick={handleAddProduct} className="mt-4" disabled={isAddingProduct}>
+          {isAddingProduct ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Adicionando...
+            </>
+          ) : (
+            'Adicionar Produto'
+          )}
+        </Button>
       </div>
       
-      <h2 className="text-xl font-semibold mb-4">Produtos Cadastrados</h2>
-      {products.length === 0 ? (
-        <div className="text-center py-10 text-gray-500">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Produtos Cadastrados</h2>
+        <div className="text-sm text-muted-foreground">
+          {products.length} {products.length === 1 ? 'produto' : 'produtos'}
+        </div>
+      </div>
+      
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : products.length === 0 ? (
+        <div className="text-center py-10 text-gray-500 dark:text-gray-400">
           Nenhum produto cadastrado
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
-            <Card key={product.id}>
+            <Card key={product.id} className="dark:bg-slate-800 dark:border-slate-700">
               <CardContent className="p-4">
                 <div className="flex items-center mb-2">
-                  <div className="h-10 w-10 rounded-full bg-sales-light flex items-center justify-center mr-3">
-                    <Package className="h-5 w-5 text-sales-secondary" />
+                  <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center mr-3">
+                    <Package className="h-5 w-5 text-indigo-600 dark:text-indigo-300" />
                   </div>
                   <div className="flex-1">
                     <h3 className="font-medium">{product.name}</h3>
@@ -169,12 +231,12 @@ const ProductsPage = () => {
                   </Button>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
-                  <div className="bg-gray-50 p-2 rounded">
-                    <span className="text-gray-500">Estoque:</span>
+                  <div className="bg-gray-50 dark:bg-slate-700 p-2 rounded">
+                    <span className="text-gray-500 dark:text-gray-300">Estoque:</span>
                     <div className="font-semibold">{product.quantity} un</div>
                   </div>
-                  <div className="bg-gray-50 p-2 rounded">
-                    <span className="text-gray-500">Preço:</span>
+                  <div className="bg-gray-50 dark:bg-slate-700 p-2 rounded">
+                    <span className="text-gray-500 dark:text-gray-300">Preço:</span>
                     <div className="font-semibold">R$ {product.value.toFixed(2)}</div>
                   </div>
                 </div>
@@ -185,16 +247,31 @@ const ProductsPage = () => {
       )}
       
       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="dark:bg-slate-800 dark:text-white dark:border-slate-700">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="dark:text-gray-300">
               Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+            <AlertDialogCancel className="dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                'Excluir'
+              )}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

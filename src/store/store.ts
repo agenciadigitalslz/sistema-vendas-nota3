@@ -1,167 +1,240 @@
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { Client, Product, Sale, SaleStatus } from '@/types';
+import { Client, Product, Sale, DetailedSale } from '@/types';
+import { fetchClients, addClient as apiAddClient, deleteClient as apiDeleteClient } from './clientStore';
+import { fetchProducts, addProduct as apiAddProduct, deleteProduct as apiDeleteProduct } from './productStore';
+import { fetchSales, fetchDetailedSales, createSale as apiCreateSale, cancelSale as apiCancelSale } from './saleStore';
 
-interface StoreState {
-  clients: Client[];
-  products: Product[];
-  sales: Sale[];
-  // Client actions
-  addClient: (name: string) => void;
-  deleteClient: (id: number) => void;
-  // Product actions
-  addProduct: (name: string, quantity: number, value: number) => void;
-  deleteProduct: (id: number) => void;
-  updateProductStock: (id: number, quantityChange: number) => void;
-  // Sale actions
-  createSale: (clientId: number, productId: number, quantity: number) => Sale;
-  cancelSale: (id: number) => void;
-  deleteSale: (id: number) => void;
+interface ThemeState {
+  isDarkMode: boolean;
+  toggleTheme: () => void;
 }
 
-export const useStore = create<StoreState>()(
-  persist(
-    (set, get) => ({
-      clients: [],
-      products: [],
-      sales: [],
+interface DataState {
+  clients: Client[];
+  products: Product[];
+  detailedSales: DetailedSale[];
+  isLoading: boolean;
+  error: string | null;
+  initialized: boolean;
+  
+  // Inicialização e carregamento
+  initialize: () => Promise<void>;
+  refreshData: () => Promise<void>;
+  
+  // Client actions
+  addClient: (name: string) => Promise<void>;
+  deleteClient: (id: number) => Promise<void>;
+  
+  // Product actions
+  addProduct: (name: string, quantity: number, value: number) => Promise<void>;
+  deleteProduct: (id: number) => Promise<void>;
+  
+  // Sale actions
+  createSale: (clientId: number, productId: number, quantity: number) => Promise<DetailedSale>;
+  cancelSale: (id: number) => Promise<void>;
+}
 
-      // Client actions
-      addClient: (name: string) => {
-        const { clients } = get();
-        const newId = clients.length > 0 ? Math.max(...clients.map(c => c.id)) + 1 : 1;
-        
-        set((state) => ({
-          clients: [...state.clients, { id: newId, name }]
-        }));
-      },
+// Store para o tema
+export const useThemeStore = create<ThemeState>()((set) => ({
+  isDarkMode: localStorage.getItem('dark-mode') === 'true',
+  toggleTheme: () => {
+    set((state) => {
+      const newMode = !state.isDarkMode;
+      localStorage.setItem('dark-mode', String(newMode));
       
-      deleteClient: (id: number) => {
-        const { sales } = get();
-        // Check if client has any active sales (matching SQL ON DELETE RESTRICT)
-        const hasActiveSales = sales.some(sale => sale.clientId === id && sale.status === 'ativa');
-        
-        if (hasActiveSales) {
-          throw new Error("Cannot delete client with active sales");
-        }
-        
-        set((state) => ({
-          clients: state.clients.filter(client => client.id !== id)
-        }));
-      },
-
-      // Product actions
-      addProduct: (name: string, quantity: number, value: number) => {
-        const { products } = get();
-        const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-        
-        set((state) => ({
-          products: [...state.products, { id: newId, name, quantity, value }]
-        }));
-      },
-      
-      deleteProduct: (id: number) => {
-        const { sales } = get();
-        // Check if product has any active sales (matching SQL ON DELETE RESTRICT)
-        const hasActiveSales = sales.some(sale => sale.productId === id && sale.status === 'ativa');
-        
-        if (hasActiveSales) {
-          throw new Error("Cannot delete product with active sales");
-        }
-        
-        set((state) => ({
-          products: state.products.filter(product => product.id !== id)
-        }));
-      },
-      
-      updateProductStock: (id: number, quantityChange: number) => {
-        set((state) => ({
-          products: state.products.map(product => 
-            product.id === id 
-              ? { ...product, quantity: product.quantity + quantityChange } 
-              : product
-          )
-        }));
-      },
-
-      // Sale actions
-      createSale: (clientId: number, productId: number, quantity: number) => {
-        const { sales, products, updateProductStock } = get();
-        const product = products.find(p => p.id === productId);
-        
-        if (!product) {
-          throw new Error("Product not found");
-        }
-        
-        if (product.quantity < quantity) {
-          throw new Error("Insufficient stock");
-        }
-        
-        const totalValue = quantity * product.value;
-        const newId = sales.length > 0 ? Math.max(...sales.map(s => s.id)) + 1 : 1;
-        const dateTime = new Date().toLocaleString();
-        
-        const newSale = {
-          id: newId,
-          clientId,
-          productId,
-          quantity,
-          totalValue,
-          dateTime,
-          status: 'ativa' as SaleStatus
-        };
-        
-        // Update the stock
-        updateProductStock(productId, -quantity);
-        
-        set((state) => ({
-          sales: [...state.sales, newSale]
-        }));
-        
-        return newSale;
-      },
-      
-      cancelSale: (id: number) => {
-        const { sales, updateProductStock } = get();
-        const sale = sales.find(s => s.id === id);
-        
-        if (!sale) {
-          throw new Error("Sale not found");
-        }
-        
-        if (sale.status === 'cancelada') {
-          throw new Error("Sale already cancelled");
-        }
-        
-        // Restore the product quantity
-        updateProductStock(sale.productId, sale.quantity);
-        
-        set((state) => ({
-          sales: state.sales.map(s => 
-            s.id === id 
-              ? { ...s, status: 'cancelada' as SaleStatus } 
-              : s
-          )
-        }));
-      },
-      
-      deleteSale: (id: number) => {
-        const { sales, updateProductStock } = get();
-        const sale = sales.find(s => s.id === id);
-        
-        if (sale && sale.status === 'ativa') {
-          // Restore the product quantity
-          updateProductStock(sale.productId, sale.quantity);
-        }
-        
-        set((state) => ({
-          sales: state.sales.filter(s => s.id !== id)
-        }));
+      // Aplicar a classe no document para o Tailwind
+      if (newMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
       }
-    }),
-    {
-      name: 'sales-system-storage'
+      
+      return { isDarkMode: newMode };
+    });
+  },
+}));
+
+// Inicializar o tema no carregamento
+if (typeof window !== 'undefined') {
+  if (localStorage.getItem('dark-mode') === 'true') {
+    document.documentElement.classList.add('dark');
+  }
+}
+
+// Store para os dados
+export const useStore = create<DataState>()((set, get) => ({
+  clients: [],
+  products: [],
+  detailedSales: [],
+  isLoading: false,
+  error: null,
+  initialized: false,
+
+  // Inicializar dados do Supabase
+  initialize: async () => {
+    const { initialized } = get();
+    if (initialized) return;
+    
+    await get().refreshData();
+    set({ initialized: true });
+  },
+
+  // Atualizar todos os dados
+  refreshData: async () => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      const [clients, products, detailedSales] = await Promise.all([
+        fetchClients(),
+        fetchProducts(),
+        fetchDetailedSales()
+      ]);
+      
+      set({ 
+        clients, 
+        products, 
+        detailedSales,
+        isLoading: false 
+      });
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Erro ao carregar dados', 
+        isLoading: false 
+      });
     }
-  )
-);
+  },
+
+  // Client actions
+  addClient: async (name: string) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      const newClient = await apiAddClient(name);
+      set(state => ({ 
+        clients: [...state.clients, newClient],
+        isLoading: false
+      }));
+    } catch (error) {
+      console.error('Erro ao adicionar cliente:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Erro ao adicionar cliente', 
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+  
+  deleteClient: async (id: number) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      await apiDeleteClient(id);
+      set(state => ({ 
+        clients: state.clients.filter(client => client.id !== id),
+        isLoading: false
+      }));
+    } catch (error) {
+      console.error('Erro ao excluir cliente:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Erro ao excluir cliente', 
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  // Product actions
+  addProduct: async (name: string, quantity: number, value: number) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      const newProduct = await apiAddProduct(name, quantity, value);
+      set(state => ({ 
+        products: [...state.products, newProduct],
+        isLoading: false
+      }));
+    } catch (error) {
+      console.error('Erro ao adicionar produto:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Erro ao adicionar produto', 
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+  
+  deleteProduct: async (id: number) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      await apiDeleteProduct(id);
+      set(state => ({ 
+        products: state.products.filter(product => product.id !== id),
+        isLoading: false
+      }));
+    } catch (error) {
+      console.error('Erro ao excluir produto:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Erro ao excluir produto', 
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  // Sale actions
+  createSale: async (clientId: number, productId: number, quantity: number) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      const newSale = await apiCreateSale(clientId, productId, quantity);
+      
+      // Buscar dados atualizados após a venda (produtos e vendas)
+      await get().refreshData();
+      
+      set({ isLoading: false });
+      
+      // Retornar os detalhes da venda para exibição
+      const client = get().clients.find(c => c.id === clientId);
+      const product = get().products.find(p => p.id === productId);
+      
+      const detailedSale: DetailedSale = {
+        ...newSale,
+        clientName: client?.name || "Cliente não encontrado",
+        productName: product?.name || "Produto não encontrado",
+        productValue: product?.value || 0
+      };
+      
+      return detailedSale;
+    } catch (error) {
+      console.error('Erro ao criar venda:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Erro ao criar venda', 
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+  
+  cancelSale: async (id: number) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      await apiCancelSale(id);
+      
+      // Atualizar dados após o cancelamento (produtos e vendas)
+      await get().refreshData();
+      
+      set({ isLoading: false });
+    } catch (error) {
+      console.error('Erro ao cancelar venda:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Erro ao cancelar venda', 
+        isLoading: false 
+      });
+      throw error;
+    }
+  }
+}));
