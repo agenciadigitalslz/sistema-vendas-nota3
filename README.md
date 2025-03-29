@@ -1,69 +1,106 @@
-# Welcome to your Lovable project
+# Sistema de Vendas
 
-## Project info
+Este é um sistema de vendas moderno desenvolvido com uma stack de tecnologias atualizadas, incluindo **Vite**, **React**, **TypeScript** e **Tailwind CSS**. O projeto foi refatorado a partir de um sistema de vendas anterior escrito em C, trazendo uma interface mais amigável e funcionalidades aprimoradas.
 
-**URL**: https://lovable.dev/projects/c406fe07-f982-4811-90e5-696f069bfa31
+## 📋 Sobre o Projeto
 
-## How can I edit this code?
+Este projeto representa a evolução de um Sistema de Vendas originalmente desenvolvido em C como parte de uma atividade acadêmica na disciplina de Linguagem de Programação com C. A versão atual adapta as funcionalidades do sistema original para uma aplicação web moderna com interface gráfica intuitiva.
 
-There are several ways of editing your application.
+### Funcionalidades Principais
 
-**Use Lovable**
+- **Cadastro de Clientes:** Armazena nome e ID único dos clientes
+- **Cadastro de Produtos:** Armazena nome, quantidade, valor e ID único
+- **Realização de Vendas:** Solicita dados do cliente, produto e quantidade, validando estoque
+- **Consulta de Dados:** Exibe clientes, produtos e histórico de vendas
+- **Cancelamento de Vendas:** Permite cancelar vendas e retornar produtos ao estoque
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c406fe07-f982-4811-90e5-696f069bfa31) and start prompting.
+## 🚀 Como Executar o Projeto
 
-Changes made via Lovable will be committed automatically to this repo.
+Siga os passos abaixo para rodar o projeto localmente:
 
-**Use your preferred IDE**
+1. **Clone o Repositório**
+   ```bash
+   git clone https://github.com/agenciadigitalslz/sistema-vendas.git
+   cd sistema-vendas
+   ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+2. **Instale as Dependências**
+   ```bash
+   npm install
+   ```
+   ou
+   ```bash
+   yarn install
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+3. **Inicie o Servidor de Desenvolvimento**
+   ```bash
+   npm run dev
+   ```
+   ou
+   ```bash
+   yarn dev
+   ```
 
-Follow these steps:
+4. **Acesse a Aplicação**
+   Abra o navegador e acesse `http://localhost:3000`.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🛠️ Tecnologias Utilizadas
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- **Vite**: Build tool rápida e moderna
+- **React**: Biblioteca JavaScript para construção de interfaces
+- **TypeScript**: Adiciona tipagem estática ao JavaScript
+- **Tailwind CSS**: Framework CSS utilitário para estilização
+- **shadcn-ui**: Biblioteca de componentes UI moderna
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 📂 Estrutura do Projeto
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+sistema-vendas/
+├── src/
+│   ├── components/  # Componentes React
+│   ├── pages/       # Páginas da aplicação
+│   ├── styles/      # Estilos globais e utilitários
+│   └── App.tsx      # Componente principal
+├── public/          # Arquivos estáticos
+├── package.json     # Dependências e scripts
+└── vite.config.ts   # Configuração do Vite
 ```
 
-**Edit a file directly in GitHub**
+## 🧠 Da Versão C ao Web: Processo de Evolução
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Este projeto representa a evolução de um sistema de vendas inicialmente desenvolvido em C para uma aplicação web moderna. A migração manteve as funcionalidades essenciais:
 
-**Use GitHub Codespaces**
+- Registro completo dos dados de compra
+- Cálculo preciso do valor total das vendas
+- Validação eficiente do estoque disponível
+- Geração de relatórios detalhados de vendas
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+A versão web adiciona melhorias significativas:
+- Interface gráfica intuitiva e responsiva
+- Experiência de usuário aprimorada
+- Organização visual clara dos dados
+- Navegação simplificada entre as funcionalidades
 
-## What technologies are used for this project?
+## 📝 Licença
 
-This project is built with .
+Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para mais detalhes. Você é livre para usar, modificar e distribuir este software, desde que mantenha os direitos autorais originais.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🤝 Contribuição
 
-## How can I deploy this project?
+Contribuições são bem-vindas! Siga os passos abaixo:
 
-Simply open [Lovable](https://lovable.dev/projects/c406fe07-f982-4811-90e5-696f069bfa31) and click on Share -> Publish.
+1. Faça um fork do projeto.
+2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`).
+3. Commit suas alterações (`git commit -m 'Adiciona nova feature'`).
+4. Faça push para a branch (`git push origin feature/nova-feature`).
+5. Abra um Pull Request.
 
-## I want to use a custom domain - is that possible?
+## 📧 Contato
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+Para dúvidas ou sugestões, entre em contato com a equipe de desenvolvimento.
+
+---
+**Nota:** Este projeto foi gerador por vibe coding [André Lopes](https://github.com/agenciadigitalslz).
+
+**Nota Educacional:** Este projeto foi gerado por lovable.dev para fins educativos e não sofreu alterações em seu código gerado original. O projeto foi criado com base em uma atividade acadêmica de Linguagem de Programação em C, transformando o Sistema de Vendas original em uma aplicação web moderna com interface gráfica.
