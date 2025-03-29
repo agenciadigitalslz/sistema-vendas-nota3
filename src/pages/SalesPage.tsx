@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useStore } from "@/store/store";
-import { DetailedSale } from "@/types";
+import { DetailedSale, Sale } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -52,7 +51,6 @@ const SalesPage = () => {
   const [currentSale, setCurrentSale] = useState<DetailedSale | null>(null);
 
   const handleCreateSale = () => {
-    // Validate inputs
     if (!clientId) {
       toast({
         variant: "destructive",
@@ -81,7 +79,6 @@ const SalesPage = () => {
       return;
     }
 
-    // Check if product has enough stock
     const product = products.find(p => p.id === Number(productId));
     if (!product || product.quantity < qty) {
       toast({
@@ -95,7 +92,6 @@ const SalesPage = () => {
     try {
       const sale = createSale(Number(clientId), Number(productId), qty);
       
-      // Create detailed sale for invoice
       const client = clients.find(c => c.id === Number(clientId))!;
       const detailedSale: DetailedSale = {
         ...sale,
@@ -106,7 +102,6 @@ const SalesPage = () => {
       
       setCurrentSale(detailedSale);
       
-      // Reset form
       setClientId("");
       setProductId("");
       setQuantity("");
@@ -116,7 +111,6 @@ const SalesPage = () => {
         description: `Venda #${sale.id} registrada com sucesso.`,
       });
       
-      // Show invoice
       setInvoiceOpen(true);
       
     } catch (error) {
@@ -159,7 +153,6 @@ const SalesPage = () => {
     setInvoiceOpen(true);
   };
 
-  // Create detailed sales for display
   const detailedSales = sales.map(sale => {
     const client = clients.find(c => c.id === sale.clientId);
     const product = products.find(p => p.id === sale.productId);
@@ -170,9 +163,8 @@ const SalesPage = () => {
       productName: product?.name || "Produto não encontrado",
       productValue: product?.value || 0
     };
-  }).sort((a, b) => b.id - a.id); // Most recent first
+  }).sort((a, b) => b.id - a.id);
 
-  // Calculate total revenue
   const totalRevenue = detailedSales.reduce((sum, sale) => sum + sale.totalValue, 0);
 
   return (
@@ -290,7 +282,6 @@ const SalesPage = () => {
         </Card>
       )}
       
-      {/* Confirmation Dialog */}
       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -306,7 +297,6 @@ const SalesPage = () => {
         </AlertDialogContent>
       </AlertDialog>
       
-      {/* Invoice Dialog */}
       <Dialog open={invoiceOpen} onOpenChange={setInvoiceOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
