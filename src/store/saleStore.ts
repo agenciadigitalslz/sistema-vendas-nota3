@@ -70,6 +70,8 @@ export const createSale = async (clientId: number, productId: number, quantity: 
   const totalValue = quantity * product.value
 
   // Criar a venda
+  const dateTime = new Date().toISOString();
+
   const { data, error } = await supabase
     .from('vendas')
     .insert([{
@@ -77,9 +79,11 @@ export const createSale = async (clientId: number, productId: number, quantity: 
       productId,
       quantity,
       totalValue,
+      dateTime,
       status: 'ativa'
     }])
     .select()
+
 
   if (error) throw error
 
