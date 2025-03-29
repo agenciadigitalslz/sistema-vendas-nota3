@@ -167,7 +167,8 @@ const ClientsPage = () => {
                     <p className="text-sm text-muted-foreground">ID: {client.id}</p>
                   </div>
                   <Button
-                    className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => confirmDelete(client.id)}
                   >
                     <Trash className="h-4 w-4 text-destructive" />

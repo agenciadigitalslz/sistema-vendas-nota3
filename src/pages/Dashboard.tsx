@@ -1,4 +1,3 @@
-
 import { useStore } from "@/store/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, XAxis, YAxis, Bar, Tooltip, ResponsiveContainer } from "recharts";
@@ -34,9 +33,7 @@ const Dashboard = () => {
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <Button 
           onClick={handleRefresh} 
-          variant="outline" 
-          size="sm"
-          className="flex gap-2 items-center"
+          className="flex gap-2 items-center bg-background border border-input hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3"
           disabled={isLoading}
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
