@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  
   // Obter dados da store
   const { 
     detailedSales: vendas, 
@@ -139,8 +142,14 @@ const Dashboard = () => {
       const produtoId = venda.produto_id || venda.productId;
       const clienteId = venda.cliente_id || venda.clientId;
       
-      // Garantir que a data seja parseada corretamente
-      const dataVenda = venda.created_at || venda.createdAt || venda.data_hora || venda.dataHora || venda.date;
+      // Solução mais robusta para garantir a data
+      const dataVenda = venda.created_at || 
+                       venda.createdAt || 
+                       venda.data_hora || 
+                       venda.dataHora || 
+                       venda.date || 
+                       // Garantir data válida para display
+                       new Date().toISOString();
       
       return {
         id: venda.id,
@@ -457,8 +466,7 @@ const Dashboard = () => {
                       </div>
                       
                       <div className="text-sm text-muted-foreground">
-                        {formatarDataRelativa(venda.data_hora) || 'Data desconhecida'}
-                        {venda.data_hora && <span className="block text-xs opacity-70">{new Date(venda.data_hora).toLocaleDateString('pt-BR')}</span>}
+                        {formatarDataRelativa(venda.data_hora)}
                       </div>
                       
                       <div className="text-right">
@@ -476,7 +484,11 @@ const Dashboard = () => {
                   );
                 })}
                 
-                <Button variant="ghost" className="w-full text-sm mt-2">
+                <Button 
+                  variant="ghost" 
+                  className="w-full text-sm mt-2"
+                  onClick={() => navigate('/sales')}
+                >
                   Ver todas as vendas
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
