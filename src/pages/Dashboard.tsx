@@ -139,6 +139,9 @@ const Dashboard = () => {
       const produtoId = venda.produto_id || venda.productId;
       const clienteId = venda.cliente_id || venda.clientId;
       
+      // Garantir que a data seja parseada corretamente
+      const dataVenda = venda.created_at || venda.createdAt || venda.data_hora || venda.dataHora || venda.date;
+      
       return {
         id: venda.id,
         cliente_id: clienteId,
@@ -147,8 +150,8 @@ const Dashboard = () => {
         cliente: buscarNomeCliente(clienteId),
         value: venda.totalValue || venda.valor_total || 0,
         quantidade: venda.quantidade || venda.quantity || 1,
-        data_hora: venda.created_at || venda.createdAt || venda.data_hora || venda.dataHora || venda.date,
-        status: venda.status
+        data_hora: dataVenda,
+        status: venda.status || "ativa"
       };
     });
   }, [vendas, buscarNomeCliente, buscarNomeProduto]);
@@ -454,7 +457,8 @@ const Dashboard = () => {
                       </div>
                       
                       <div className="text-sm text-muted-foreground">
-                        {formatarDataRelativa(venda.data_hora)}
+                        {formatarDataRelativa(venda.data_hora) || 'Data desconhecida'}
+                        {venda.data_hora && <span className="block text-xs opacity-70">{new Date(venda.data_hora).toLocaleDateString('pt-BR')}</span>}
                       </div>
                       
                       <div className="text-right">
