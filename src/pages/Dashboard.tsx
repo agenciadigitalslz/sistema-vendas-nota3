@@ -240,38 +240,44 @@ const Dashboard = () => {
       
       <div className="grid gap-4 md:grid-cols-3 mb-6">
         <Card className="dark:bg-slate-800 dark:text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total de Clientes
-            </CardTitle>
-            <User className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{clientes.length}</div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">Total de Clientes</h3>
+                <p className="text-4xl font-bold mt-1">{clientes.length}</p>
+              </div>
+              <div className="bg-blue-100 p-3 rounded-full dark:bg-blue-900">
+                <User className="h-8 w-8 text-blue-500 dark:text-blue-400" />
+              </div>
+            </div>
           </CardContent>
         </Card>
         
         <Card className="dark:bg-slate-800 dark:text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total de Produtos
-            </CardTitle>
-            <Package className="h-4 w-4 text-indigo-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{produtos.length}</div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">Total de Produtos</h3>
+                <p className="text-4xl font-bold mt-1">{produtos.length}</p>
+              </div>
+              <div className="bg-indigo-100 p-3 rounded-full dark:bg-indigo-900">
+                <Package className="h-8 w-8 text-indigo-500 dark:text-indigo-400" />
+              </div>
+            </div>
           </CardContent>
         </Card>
         
         <Card className="dark:bg-slate-800 dark:text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total de Vendas
-            </CardTitle>
-            <ShoppingCart className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{vendas.length}</div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">Total de Vendas</h3>
+                <p className="text-4xl font-bold mt-1">{vendas.length}</p>
+              </div>
+              <div className="bg-emerald-100 p-3 rounded-full dark:bg-emerald-900">
+                <ShoppingCart className="h-8 w-8 text-emerald-500 dark:text-emerald-400" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
