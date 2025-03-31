@@ -1,3 +1,4 @@
+
 import { useStore } from "@/store/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, XAxis, YAxis, Bar, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
@@ -206,7 +207,7 @@ const Dashboard = () => {
         </Button>
       </div>
       
-      {/* REDESENHADO: Cards de estatísticas melhor alinhados */}
+      {/* Cards de estatísticas melhor alinhados */}
       <div className="grid gap-6 md:grid-cols-3 mb-8">
         <Card className="shadow-lg border-t-4 border-t-blue-500 dark:bg-slate-800 dark:border-t-blue-600 transition-all duration-300 hover:shadow-xl">
           <CardContent className="pt-6 pb-4 px-6">
@@ -252,92 +253,94 @@ const Dashboard = () => {
       </div>
       
       <div className="grid gap-4 md:grid-cols-2">
-        {/* Coluna da esquerda: Cards de Receita */}
+        {/* Coluna da esquerda: Cards de Receita - MELHORADOS */}
         <div className="space-y-4">
-          {/* Card de Receita Hoje */}
-          <Card className="shadow-md dark:bg-slate-800 dark:text-white">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg font-semibold">Receita Hoje</CardTitle>
-                <Calendar className="h-5 w-5 text-blue-500" />
+          {/* Card de Receita Hoje - MELHORADO */}
+          <Card className="shadow-lg border-t-4 border-t-blue-500 dark:bg-slate-800 dark:border-t-blue-600 transition-all duration-300 hover:shadow-xl">
+            <CardContent className="pt-6 pb-4 px-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Receita Hoje</p>
+                  {loading ? (
+                    <Skeleton className="h-10 w-28" />
+                  ) : (
+                    <div className="flex flex-col">
+                      <h2 className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                        R$ {receitaHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {vendasHoje.length} {vendasHoje.length === 1 ? 'venda' : 'vendas'} hoje
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-full">
+                  <Calendar className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-16 w-full" />
-              ) : (
-                <>
-                  <div className="flex items-baseline gap-2">
-                    <h3 className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                      R$ {receitaHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {vendasHoje.length} {vendasHoje.length === 1 ? 'venda' : 'vendas'} hoje - 
-                    {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                  </p>
-                </>
-              )}
             </CardContent>
           </Card>
 
-          {/* NOVO Card de Receita Mensal */}
-          <Card className="shadow-md dark:bg-slate-800 dark:text-white">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg font-semibold">Receita de {nomeMesAtual}</CardTitle>
-                <BarChart3 className="h-5 w-5 text-purple-500" />
+          {/* Card de Receita Mensal - MELHORADO */}
+          <Card className="shadow-lg border-t-4 border-t-purple-500 dark:bg-slate-800 dark:border-t-purple-600 transition-all duration-300 hover:shadow-xl">
+            <CardContent className="pt-6 pb-4 px-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Receita de {nomeMesAtual}</p>
+                  {loading ? (
+                    <Skeleton className="h-10 w-28" />
+                  ) : (
+                    <div className="flex flex-col">
+                      <h2 className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                        R$ {receitaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {vendasMes.length} {vendasMes.length === 1 ? 'venda' : 'vendas'} em {nomeMesAtual}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <div className="bg-purple-100 dark:bg-purple-900/50 p-3 rounded-full">
+                  <BarChart3 className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-16 w-full" />
-              ) : (
-                <>
-                  <div className="flex items-baseline gap-2">
-                    <h3 className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                      R$ {receitaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {vendasMes.length} {vendasMes.length === 1 ? 'venda' : 'vendas'} em {nomeMesAtual}
-                  </p>
-                </>
-              )}
             </CardContent>
           </Card>
 
-          {/* Card de Receita Total */}
-          <Card className="shadow-md dark:bg-slate-800 dark:text-white">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg font-semibold">Receita Total</CardTitle>
-                <TrendingUp className="h-5 w-5 text-emerald-500" />
+          {/* Card de Receita Total - MELHORADO */}
+          <Card className="shadow-lg border-t-4 border-t-emerald-500 dark:bg-slate-800 dark:border-t-emerald-600 transition-all duration-300 hover:shadow-xl">
+            <CardContent className="pt-6 pb-4 px-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Receita Total</p>
+                  {loading ? (
+                    <Skeleton className="h-10 w-28" />
+                  ) : (
+                    <div className="flex flex-col">
+                      <h2 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                        R$ {receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </h2>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Total acumulado de vendas ativas
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <div className="bg-emerald-100 dark:bg-emerald-900/50 p-3 rounded-full">
+                  <TrendingUp className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-16 w-full" />
-              ) : (
-                <>
-                  <div className="flex items-baseline gap-2">
-                    <h3 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-                      R$ {receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Total acumulado de vendas ativas
-                  </p>
-                </>
-              )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Coluna da direita: Gráfico de Últimas Vendas */}
-        <Card className="dark:bg-slate-800 dark:text-white">
-          <CardHeader>
-            <CardTitle>Últimas Vendas</CardTitle>
+        {/* Coluna da direita: Gráfico de Últimas Vendas - MELHORADO */}
+        <Card className="shadow-lg border-t-4 border-t-amber-500 dark:bg-slate-800 dark:border-t-amber-600 transition-all duration-300 hover:shadow-xl h-full">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg font-semibold">Últimas Vendas</CardTitle>
+              <BarChart className="h-5 w-5 text-amber-500" />
+            </div>
           </CardHeader>
           <CardContent className="h-80">
             {loading ? (
@@ -372,7 +375,7 @@ const Dashboard = () => {
                     dataKey="value" 
                     fill="#3b82f6"
                     radius={[4, 4, 0, 0]}
-                    className="fill-blue-500 dark:fill-blue-400"
+                    className="fill-amber-500 dark:fill-amber-400"
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -385,11 +388,14 @@ const Dashboard = () => {
         </Card>
       </div>
       
-      {/* Seção de Lista de Últimas Vendas */}
+      {/* Seção de Lista de Últimas Vendas - MELHORADA */}
       <div className="mt-4">
-        <Card className="shadow-md dark:bg-slate-800 dark:text-white">
-          <CardHeader>
-            <CardTitle>Detalhes das Últimas Vendas</CardTitle>
+        <Card className="shadow-lg border-t-4 border-t-teal-500 dark:bg-slate-800 dark:border-t-teal-600 transition-all duration-300 hover:shadow-xl">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg font-semibold">Detalhes das Últimas Vendas</CardTitle>
+              <ShoppingCart className="h-5 w-5 text-teal-500" />
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (
