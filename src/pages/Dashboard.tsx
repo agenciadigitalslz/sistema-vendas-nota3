@@ -1,4 +1,4 @@
-
+import * as React from 'react'
 import { useStore } from "@/store/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, XAxis, YAxis, Bar, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
@@ -339,14 +339,14 @@ const Dashboard = () => {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-lg font-semibold">Últimas Vendas</CardTitle>
-              <BarChart className="h-5 w-5 text-amber-500" />
+              <BarChart3 className="h-5 w-5 text-amber-500" />
             </div>
           </CardHeader>
-          <CardContent className="h-80">
+          <CardContent className="h-[420px] flex items-center justify-center">
             {loading ? (
               <Skeleton className="h-full w-full" />
             ) : dadosUltimasVendas.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="95%" height="85%">
                 <BarChart data={dadosUltimasVendas}>
                   <XAxis 
                     dataKey="name" 
