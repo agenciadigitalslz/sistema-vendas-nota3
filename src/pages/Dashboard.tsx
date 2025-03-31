@@ -20,7 +20,7 @@ const Dashboard = () => {
     refreshData 
   } = useStore();
   
-  // Filtrar vendas por período - CORRIGIDO COM VERIFICAÇÃO MAIS AMPLA DE DATA
+  // Filtrar vendas por período - CORRIGIDO - usando campo dateTime de forma mais precisa
   const vendasHoje = useMemo(() => {
     const hoje = new Date();
     const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
@@ -30,23 +30,15 @@ const Dashboard = () => {
       // Pular vendas canceladas
       if (venda.status === "cancelada") return false;
       
-      // Verificar em TODOS os campos possíveis de data
-      const dataVenda = new Date(
-        venda.created_at || 
-        venda.createdAt || 
-        venda.data_hora || 
-        venda.dataHora || 
-        venda.date ||
-        // Fallback para data atual se não encontrar nenhuma data válida
-        Date.now()
-      );
+      // Usar primariamente o campo dateTime da nossa interface Sale
+      const dataVenda = new Date(venda.dateTime);
       
       // Verificar se é do dia atual
       return dataVenda >= inicioHoje && dataVenda <= fimHoje;
     });
   }, [vendas]);
 
-  // Filtrar vendas do mês atual
+  // Filtrar vendas do mês atual - CORRIGIDO
   const vendasMes = useMemo(() => {
     const hoje = new Date();
     const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -55,14 +47,7 @@ const Dashboard = () => {
     return vendas.filter(venda => {
       if (venda.status === "cancelada") return false;
       
-      const dataVenda = new Date(
-        venda.created_at || 
-        venda.createdAt || 
-        venda.data_hora || 
-        venda.dataHora || 
-        venda.date ||
-        Date.now()
-      );
+      const dataVenda = new Date(venda.dateTime);
       
       return dataVenda >= inicioMes && dataVenda <= fimMes;
     });
@@ -76,18 +61,18 @@ const Dashboard = () => {
   // Calcular receitas - CORRIGIDO
   const receitaHoje = useMemo(() => 
     vendasHoje.reduce((total, venda) => 
-      total + (venda.totalValue || venda.valor_total || 0), 0),
+      total + venda.totalValue, 0),
   [vendasHoje]);
   
   // Calcular receita do mês
   const receitaMes = useMemo(() => 
     vendasMes.reduce((total, venda) => 
-      total + (venda.totalValue || venda.valor_total || 0), 0),
+      total + venda.totalValue, 0),
   [vendasMes]);
   
   const receitaTotal = useMemo(() => 
     vendasAtivas.reduce((total, venda) => 
-      total + (venda.totalValue || venda.valor_total || 0), 0),
+      total + venda.totalValue, 0),
   [vendasAtivas]);
 
   // Função para obter nome do mês atual
@@ -105,7 +90,7 @@ const Dashboard = () => {
       c.id?.toString() === clienteId?.toString()
     );
     
-    return cliente ? (cliente.name || cliente.nome) : "Cliente não encontrado";
+    return cliente ? cliente.name : "Cliente não encontrado";
   }, [clientes]);
   
   // Função para obter produto por ID - CORRIGIDO
@@ -117,7 +102,7 @@ const Dashboard = () => {
       p.id?.toString() === produtoId?.toString()
     );
     
-    return produto ? (produto.name || produto.nome) : "Produto não encontrado";
+    return produto ? produto.name : "Produto não encontrado";
   }, [produtos]);
 
   // Dados para o gráfico e lista de últimas 5 vendas - CORRIGIDO
@@ -126,40 +111,23 @@ const Dashboard = () => {
     
     // Ordenar por data (mais recentes primeiro)
     const ordenadas = [...vendas].sort((a, b) => {
-      const dateA = new Date(
-        a.created_at || a.createdAt || a.data_hora || a.dataHora || a.date || 0
-      ).getTime();
-      
-      const dateB = new Date(
-        b.created_at || b.createdAt || b.data_hora || b.dataHora || b.date || 0
-      ).getTime();
+      const dateA = new Date(a.dateTime).getTime();
+      const dateB = new Date(b.dateTime).getTime();
       
       return dateB - dateA;
     });
     
     // Pegar as 5 primeiras - com mais informações
     return ordenadas.slice(0, 5).map(venda => {
-      const produtoId = venda.produto_id || venda.productId;
-      const clienteId = venda.cliente_id || venda.clientId;
-      
-      // Solução mais robusta para garantir a data
-      const dataVenda = venda.created_at || 
-                       venda.createdAt || 
-                       venda.data_hora || 
-                       venda.dataHora || 
-                       venda.date || 
-                       // Garantir data válida para display
-                       new Date().toISOString();
-      
       return {
         id: venda.id,
-        cliente_id: clienteId,
-        produto_id: produtoId,
-        name: buscarNomeProduto(produtoId),
-        cliente: buscarNomeCliente(clienteId),
-        value: venda.totalValue || venda.valor_total || 0,
-        quantidade: venda.quantidade || venda.quantity || 1,
-        data_hora: dataVenda,
+        cliente_id: venda.clientId,
+        produto_id: venda.productId,
+        name: buscarNomeProduto(venda.productId),
+        cliente: buscarNomeCliente(venda.clientId),
+        value: venda.totalValue,
+        quantidade: venda.quantity,
+        data_hora: venda.dateTime,
         status: venda.status || "ativa"
       };
     });
