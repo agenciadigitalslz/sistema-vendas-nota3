@@ -206,44 +206,45 @@ const Dashboard = () => {
         </Button>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-3 mb-6">
-        <Card className="dark:bg-slate-800 dark:text-white">
-          <CardContent className="p-4">
+      {/* REDESENHADO: Cards de estatísticas melhor alinhados */}
+      <div className="grid gap-6 md:grid-cols-3 mb-8">
+        <Card className="shadow-lg border-t-4 border-t-blue-500 dark:bg-slate-800 dark:border-t-blue-600 transition-all duration-300 hover:shadow-xl">
+          <CardContent className="pt-6 pb-4 px-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Total de Clientes</h3>
-                <p className="text-4xl font-bold mt-1">{clientes.length}</p>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Total de Clientes</p>
+                <h2 className="text-4xl font-bold">{clientes.length}</h2>
               </div>
-              <div className="bg-blue-100 p-3 rounded-full dark:bg-blue-900">
-                <User className="h-8 w-8 text-blue-500 dark:text-blue-400" />
+              <div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-full">
+                <User className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="dark:bg-slate-800 dark:text-white">
-          <CardContent className="p-4">
+        <Card className="shadow-lg border-t-4 border-t-indigo-500 dark:bg-slate-800 dark:border-t-indigo-600 transition-all duration-300 hover:shadow-xl">
+          <CardContent className="pt-6 pb-4 px-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Total de Produtos</h3>
-                <p className="text-4xl font-bold mt-1">{produtos.length}</p>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Total de Produtos</p>
+                <h2 className="text-4xl font-bold">{produtos.length}</h2>
               </div>
-              <div className="bg-indigo-100 p-3 rounded-full dark:bg-indigo-900">
-                <Package className="h-8 w-8 text-indigo-500 dark:text-indigo-400" />
+              <div className="bg-indigo-100 dark:bg-indigo-900/50 p-3 rounded-full">
+                <Package className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="dark:bg-slate-800 dark:text-white">
-          <CardContent className="p-4">
+        <Card className="shadow-lg border-t-4 border-t-emerald-500 dark:bg-slate-800 dark:border-t-emerald-600 transition-all duration-300 hover:shadow-xl">
+          <CardContent className="pt-6 pb-4 px-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Total de Vendas</h3>
-                <p className="text-4xl font-bold mt-1">{vendas.length}</p>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Total de Vendas</p>
+                <h2 className="text-4xl font-bold">{vendasAtivas.length}</h2>
               </div>
-              <div className="bg-emerald-100 p-3 rounded-full dark:bg-emerald-900">
-                <ShoppingCart className="h-8 w-8 text-emerald-500 dark:text-emerald-400" />
+              <div className="bg-emerald-100 dark:bg-emerald-900/50 p-3 rounded-full">
+                <ShoppingCart className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
           </CardContent>
@@ -384,7 +385,7 @@ const Dashboard = () => {
         </Card>
       </div>
       
-      {/* Seção de Lista de Últimas Vendas - CORRIGIDA */}
+      {/* Seção de Lista de Últimas Vendas */}
       <div className="mt-4">
         <Card className="shadow-md dark:bg-slate-800 dark:text-white">
           <CardHeader>
@@ -404,7 +405,6 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Cabeçalho da tabela */}
                 <div className="grid grid-cols-4 gap-4 font-medium text-sm px-4 py-2 border-b">
                   <div>Cliente</div>
                   <div>Produto</div>
@@ -412,7 +412,6 @@ const Dashboard = () => {
                   <div className="text-right">Valor</div>
                 </div>
                 
-                {/* Linhas de vendas - CORRIGIDAS */}
                 {dadosUltimasVendas.map((venda) => {
                   const statusInfo = obterStatusVenda(venda.status);
                   

@@ -67,13 +67,13 @@ const AppLayout = () => {
           <AppSidebar />
         </div>
         
+        {/* Botão de alternar tema - REPOSICIONADO para a lateral direita da tela */}
+        <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50">
+          <ThemeToggle />
+        </div>
+        
         {/* Conteúdo principal com padding para evitar que o conteúdo fique embaixo do menu móvel */}
         <main className="flex-1 overflow-y-auto pb-16 md:pb-0 dark:bg-slate-900 transition-colors">
-          {/* Botão de alternar tema - REPOSICIONADO para não sobrepor ao botão de atualizar */}
-          <div className="absolute top-4 right-16 z-50">
-            <ThemeToggle />
-          </div>
-          
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/clients" element={<ClientsPage />} />
