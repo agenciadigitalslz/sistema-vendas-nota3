@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useStore } from "@/store/store";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { User, Trash, RefreshCw, Loader2, Pencil } from "lucide-react";
+import { Client } from "@/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +18,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Client } from "@/types";
 
 const ClientsPage = () => {
   const { clients, detailedSales, addClient, deleteClient, updateClient, isLoading, refreshData } = useStore();
@@ -160,8 +161,11 @@ const ClientsPage = () => {
         </Button>
       </div>
       
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm mb-6">
-        <h2 className="text-xl font-semibold mb-4">Adicionar Novo Cliente</h2>
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md mb-6 border-t-4 border-blue-500 hover:shadow-lg transition-all">
+        <h2 className="text-xl font-semibold mb-4 flex items-center">
+          <User className="mr-2 h-5 w-5 text-blue-500" />
+          Adicionar Novo Cliente
+        </h2>
         <div className="flex gap-4 items-end">
           <div className="flex-1">
             <Label htmlFor="clientName">Nome do Cliente</Label>
@@ -173,7 +177,7 @@ const ClientsPage = () => {
               className="dark:bg-slate-700 dark:border-slate-600"
             />
           </div>
-          <Button onClick={handleAddClient} disabled={isAddingClient}>
+          <Button onClick={handleAddClient} disabled={isAddingClient} className="bg-blue-500 hover:bg-blue-600">
             {isAddingClient ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -187,15 +191,18 @@ const ClientsPage = () => {
       </div>
       
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Clientes Cadastrados</h2>
-        <div className="text-sm text-muted-foreground">
+        <h2 className="text-xl font-semibold flex items-center">
+          <User className="mr-2 h-5 w-5 text-blue-500" />
+          Clientes Cadastrados
+        </h2>
+        <div className="text-sm text-muted-foreground bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full font-medium">
           {clients.length} {clients.length === 1 ? 'cliente' : 'clientes'}
         </div>
       </div>
       
       {isLoading ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
         </div>
       ) : clients.length === 0 ? (
         <div className="text-center py-10 text-gray-500 dark:text-gray-400">
@@ -204,7 +211,7 @@ const ClientsPage = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {clients.map((client) => (
-            <Card key={client.id} className="overflow-hidden dark:bg-slate-800 dark:border-slate-700">
+            <Card key={client.id} className="overflow-hidden dark:bg-slate-800 dark:border-slate-700 border-t-4 border-blue-500 hover:shadow-lg transition-all">
               <CardContent className="p-4">
                 <div className="flex items-center mb-3">
                   <div className="h-10 w-10 min-w-[2.5rem] rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3">
@@ -217,13 +224,15 @@ const ClientsPage = () => {
                 </div>
                 <div className="flex justify-end gap-3 mt-2">
                   <Button
-                    className="inline-flex items-center justify-center h-10 w-10 min-w-[2.5rem] gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                    variant="outline"
+                    className="inline-flex items-center justify-center h-10 w-10 min-w-[2.5rem] gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30"
                     onClick={() => startEdit(client)}
                   >
                     <Pencil className="h-4 w-4 text-blue-600" />
                   </Button>
                   <Button
-                    className="inline-flex items-center justify-center h-10 w-10 min-w-[2.5rem] gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                    variant="outline"
+                    className="inline-flex items-center justify-center h-10 w-10 min-w-[2.5rem] gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30"
                     onClick={() => confirmDelete(client.id)}
                   >
                     <Trash className="h-4 w-4 text-destructive" />

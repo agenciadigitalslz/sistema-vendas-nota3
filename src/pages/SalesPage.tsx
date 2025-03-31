@@ -8,7 +8,7 @@ import { InvoiceDialog } from "@/components/sales/InvoiceDialog";
 import { CancelSaleDialog } from "@/components/sales/CancelSaleDialog";
 import { DeleteSaleDialog } from "@/components/sales/DeleteSaleDialog";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, ShoppingCart } from "lucide-react";
 
 const SalesPage = () => {
   const { detailedSales, cancelSale, deleteSale, isLoading, refreshData } = useStore();
@@ -90,7 +90,6 @@ const SalesPage = () => {
     setInvoiceOpen(true);
   };
 
-  // Calcular receita ativa total
   const totalRevenue = detailedSales
     .filter(sale => sale.status === 'ativa')
     .reduce((sum, sale) => sum + sale.totalValue, 0);
@@ -109,22 +108,33 @@ const SalesPage = () => {
         </Button>
       </div>
       
-      <NewSaleForm onSaleCreated={handleSaleCreated} />
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md mb-6 border-t-4 border-green-500 hover:shadow-lg transition-all">
+        <h2 className="text-xl font-semibold mb-4 flex items-center">
+          <ShoppingCart className="mr-2 h-5 w-5 text-green-500" />
+          Nova Venda
+        </h2>
+        <NewSaleForm onSaleCreated={handleSaleCreated} />
+      </div>
       
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Histórico de Vendas</h2>
-        <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+        <h2 className="text-xl font-semibold flex items-center">
+          <ShoppingCart className="mr-2 h-5 w-5 text-green-500" />
+          Histórico de Vendas
+        </h2>
+        <div className="text-lg font-semibold bg-green-100 dark:bg-green-900/30 px-4 py-1 rounded-full text-green-600 dark:text-green-400">
           Total Ativo: R$ {totalRevenue.toFixed(2)}
         </div>
       </div>
       
-      <SalesList 
-        sales={detailedSales} 
-        onShowInvoice={showInvoice} 
-        onConfirmDelete={confirmCancel} 
-        onConfirmDeletePermanent={confirmDeletePermanent}
-        isLoading={isLoading}
-      />
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md border-t-4 border-green-500">
+        <SalesList 
+          sales={detailedSales} 
+          onShowInvoice={showInvoice} 
+          onConfirmDelete={confirmCancel} 
+          onConfirmDeletePermanent={confirmDeletePermanent}
+          isLoading={isLoading}
+        />
+      </div>
       
       <CancelSaleDialog 
         open={cancelDialogOpen} 

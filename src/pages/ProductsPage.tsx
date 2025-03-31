@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useStore } from "@/store/store";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Package, Trash, RefreshCw, Loader2, Pencil } from "lucide-react";
+import { Product } from "@/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -209,8 +211,11 @@ const ProductsPage = () => {
         </Button>
       </div>
       
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm mb-6">
-        <h2 className="text-xl font-semibold mb-4">Adicionar Novo Produto</h2>
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md mb-6 border-t-4 border-indigo-500 hover:shadow-lg transition-all">
+        <h2 className="text-xl font-semibold mb-4 flex items-center">
+          <Package className="mr-2 h-5 w-5 text-indigo-500" />
+          Adicionar Novo Produto
+        </h2>
         <div className="grid gap-4 md:grid-cols-3">
           <div>
             <Label htmlFor="productName">Nome do Produto</Label>
@@ -248,7 +253,7 @@ const ProductsPage = () => {
             />
           </div>
         </div>
-        <Button onClick={handleAddProduct} className="mt-4" disabled={isAddingProduct}>
+        <Button onClick={handleAddProduct} className="mt-4 bg-indigo-500 hover:bg-indigo-600" disabled={isAddingProduct}>
           {isAddingProduct ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -261,15 +266,18 @@ const ProductsPage = () => {
       </div>
       
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Produtos Cadastrados</h2>
-        <div className="text-sm text-muted-foreground">
+        <h2 className="text-xl font-semibold flex items-center">
+          <Package className="mr-2 h-5 w-5 text-indigo-500" />
+          Produtos Cadastrados
+        </h2>
+        <div className="text-sm text-muted-foreground bg-indigo-100 dark:bg-indigo-900/30 px-3 py-1 rounded-full font-medium">
           {products.length} {products.length === 1 ? 'produto' : 'produtos'}
         </div>
       </div>
       
       {isLoading ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
         </div>
       ) : products.length === 0 ? (
         <div className="text-center py-10 text-gray-500 dark:text-gray-400">
@@ -278,7 +286,7 @@ const ProductsPage = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
-            <Card key={product.id} className="dark:bg-slate-800 dark:border-slate-700">
+            <Card key={product.id} className="dark:bg-slate-800 dark:border-slate-700 border-t-4 border-indigo-500 hover:shadow-lg transition-all">
               <CardContent className="p-4">
                 <div className="flex items-center mb-2">
                   <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center mr-3">
@@ -290,13 +298,15 @@ const ProductsPage = () => {
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                      variant="outline"
+                      className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30"
                       onClick={() => startEdit(product)}
                     >
-                      <Pencil className="h-4 w-4 text-blue-600" />
+                      <Pencil className="h-4 w-4 text-indigo-600" />
                     </Button>
                     <Button
-                      className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                      variant="outline"
+                      className="inline-flex items-center justify-center h-10 w-10 gap-2 whitespace-nowrap rounded-md text-sm font-medium hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30"
                       onClick={() => confirmDelete(product.id)}
                     >
                       <Trash className="h-4 w-4 text-destructive" />
@@ -304,11 +314,11 @@ const ProductsPage = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
-                  <div className="bg-gray-50 dark:bg-slate-700 p-2 rounded">
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 p-2 rounded">
                     <span className="text-gray-500 dark:text-gray-300">Estoque:</span>
                     <div className="font-semibold">{product.quantity} un</div>
                   </div>
-                  <div className="bg-gray-50 dark:bg-slate-700 p-2 rounded">
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 p-2 rounded">
                     <span className="text-gray-500 dark:text-gray-300">Preço:</span>
                     <div className="font-semibold">R$ {product.value.toFixed(2)}</div>
                   </div>

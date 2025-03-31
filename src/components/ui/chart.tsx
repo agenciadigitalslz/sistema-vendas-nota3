@@ -353,6 +353,66 @@ function getPayloadConfigFromPayload(
     : config[key as keyof typeof config]
 }
 
+const CartesianAxisTick = ({
+  x,
+  y,
+  vertical,
+  className,
+  payload,
+}) => {
+  const textAnchor = vertical ? "end" : "middle";
+  const verticalAnchor = vertical ? "middle" : "end";
+  const rotation = vertical ? -90 : 0;
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text
+        x={0}
+        y={0}
+        dy={vertical ? 0 : 10}
+        textAnchor={textAnchor}
+        fill="currentColor"
+        className={cn(
+          "fill-muted-foreground text-xs font-medium",
+          className
+        )}
+        transform={`rotate(${rotation})`}
+      >
+        {payload.value}
+      </text>
+    </g>
+  );
+};
+
+const RadialLine = ({
+  x,
+  y,
+  isCurve,
+  isDashed,
+  className,
+  color,
+}) => {
+  const lineClassName = cn(
+    {
+      "h-2.5 w-2.5": isCurve,
+      "w-1": !isCurve && !isDashed,
+      "w-0 border-[1.5px] border-dashed bg-transparent": isDashed,
+      "my-0.5": !isCurve,
+    },
+    className
+  );
+
+  return (
+    <div
+      className={lineClassName}
+      style={{
+        "--color-border": color,
+        "--color-bg": color,
+      }}
+    />
+  );
+};
+
 export {
   ChartContainer,
   ChartTooltip,
