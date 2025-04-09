@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
@@ -207,20 +208,15 @@ const ChartTooltipContent = React.forwardRef<
                         <div
                           className={cn(
                             "shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]",
-                            {
-                              "h-2.5 w-2.5": indicator === "dot",
-                              "w-1": indicator === "line",
-                              "w-0 border-[1.5px] border-dashed bg-transparent":
-                                indicator === "dashed",
-                              "my-0.5": nestLabel && indicator === "dashed",
-                            }
+                            indicator === "dot" ? "h-2.5 w-2.5" : "",
+                            indicator === "line" ? "w-1" : "",
+                            indicator === "dashed" ? "w-0 border-[1.5px] border-dashed bg-transparent" : "",
+                            nestLabel && indicator === "dashed" ? "my-0.5" : ""
                           )}
-                          style={
-                            {
-                              "--color-bg": indicatorColor,
-                              "--color-border": indicatorColor,
-                            } as React.CSSProperties
-                          }
+                          style={{
+                            "--color-bg": indicatorColor,
+                            "--color-border": indicatorColor
+                          } as React.CSSProperties}
                         />
                       )
                     )}
@@ -392,23 +388,22 @@ const RadialLine = ({
   className,
   color,
 }) => {
-  const lineClassName = cn(
-    {
-      "h-2.5 w-2.5": isCurve,
-      "w-1": !isCurve && !isDashed,
-      "w-0 border-[1.5px] border-dashed bg-transparent": isDashed,
-      "my-0.5": !isCurve,
-    },
-    className
-  );
+  const lineClassNames = [];
+  
+  if (isCurve) lineClassNames.push("h-2.5 w-2.5");
+  if (!isCurve && !isDashed) lineClassNames.push("w-1");
+  if (isDashed) lineClassNames.push("w-0 border-[1.5px] border-dashed bg-transparent");
+  if (!isCurve) lineClassNames.push("my-0.5");
+  
+  if (className) lineClassNames.push(className);
 
   return (
     <div
-      className={lineClassName}
+      className={cn(...lineClassNames)}
       style={{
         "--color-border": color,
         "--color-bg": color,
-      }}
+      } as React.CSSProperties}
     />
   );
 };
